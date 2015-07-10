@@ -1,0 +1,22 @@
+#!/usr/bin/env php
+<?php
+
+$found = false;
+for ($i = 2; $i >= 0; $i--) {
+	$file = __DIR__ . str_repeat('/..', $i) . "/vendor/autoload.php";
+	if (file_exists($file)) {
+		$found = true;
+		require_once $file;
+		break;
+	}
+}
+
+if (!$found) {
+	fwrite(STDERR, 'You need to setup the project dependencies using Composer' . PHP_EOL);
+	die(1);
+}
+
+$app = new \Cilex\Application("Tuli");
+$app->command(new \Tuli\AnalyzeCommand);
+$app->run();
+

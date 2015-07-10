@@ -1,0 +1,24 @@
+{
+    "name": "ircmaxell/php-tuli",
+    "description": "A Control Flow Graph implementation for PHP",
+    "license": "BSD",
+    "authors": [
+        {
+            "name": "Anthony Ferrara",
+            "email": "ircmaxell@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.5",
+		"ircmaxell/php-cfg": "dev-master",
+        "cilex/cilex": "1.*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tuli\\": "lib/Tuli/"
+        }
+    }
+}
