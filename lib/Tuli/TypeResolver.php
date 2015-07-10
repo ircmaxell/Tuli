@@ -107,9 +107,11 @@ class TypeResolver {
 			case 'Expr_BinaryOp_Equal':
 			case 'Expr_BinaryOp_NotEqual':
 			case 'Expr_BinaryOp_Greater':
+			case 'Expr_BinaryOp_GreaterOrEqual':
 			case 'Expr_BinaryOp_Identical':
 			case 'Expr_BinaryOp_NotIdentical':
 			case 'Expr_BinaryOp_Smaller':
+			case 'Expr_BinaryOp_SmallerOrEqual':
 			case 'Expr_BinaryOp_LogicalAnd':
 			case 'Expr_BinaryOp_LogicalOr':
 			case 'Expr_BinaryOp_LogicalXor':
