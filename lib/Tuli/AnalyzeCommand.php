@@ -36,6 +36,7 @@ class AnalyzeCommand extends Command {
 		echo "Detecting Type Conversion Issues\n";
 		$this->detectFunctionCallClashes($components);
 		$this->detectFunctionReturnClashes($components);
+		echo "Done\n";
 	}
 
 	protected function getGraphsFromFiles(array $files, array $exclude, CFGParser $parser) {

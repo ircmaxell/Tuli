@@ -16,6 +16,7 @@ class Type {
 	const TYPE_ARRAY = 10;
 	const TYPE_HASH = 11;
 	const TYPE_CALLABLE = 12;
+	const TYPE_OBJECT = 13; // unknown object type
 
 	public $type = 0;
 	public $subType = 0;
