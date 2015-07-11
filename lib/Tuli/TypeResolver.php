@@ -162,6 +162,7 @@ class TypeResolver {
 			case 'Expr_ConcatList':
 				return [new Type(Type::TYPE_STRING)];
 			case 'Expr_BinaryOp_Mod':
+			case 'Expr_Print':
 				return [new Type(Type::TYPE_LONG)];
 			case 'Expr_Clone':
 				if ($resolved->contains($op->expr)) {
@@ -202,6 +203,7 @@ class TypeResolver {
 				// TODO: we may be able to determine these...
 				return [new Type(Type::TYPE_MIXED)];
 			case 'Expr_UnaryMinus':
+			case 'Expr_UnaryPlus':
 				if ($resolved->contains($op->expr)) {
 					switch ($resolved[$op->expr]->type) {
 						case Type::TYPE_LONG:
