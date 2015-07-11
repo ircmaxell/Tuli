@@ -336,55 +336,72 @@ class AnalyzeCommand extends Command {
 	}
 
 	protected function findReturnBlocks(Block $block, $result = []) {
-		foreach ($block->children as $op) {
-			if ($op instanceof Op\Terminal\Return_) {
-				$result[] = $op;
-				return $result;
-				// Prevent dead code from executing
-			} elseif ($op instanceof Op\Stmt\Jump) {
-				return $this->findReturnBlocks($op->target, $result);
-			} elseif ($op instanceof Op\Stmt\JumpIf) {
-				$result = $this->findReturnBlocks($op->if, $result);
-				return $this->findReturnBlocks($op->else, $result);
-			} elseif ($op instanceof Op\Stmt\Switch_) {
-				foreach ($op->targets as $target) {
-					$result = $this->findReturnBlocks($target, $result);
+		$toProcess = new \SplObjectStorage;
+		$processed = new \SplObjectStorage;
+		$toProcess->attach($block);
+		foreach ($toProcess as $block) {
+			$toProcess->detach($block);
+			$processed->attach($block);
+			foreach ($block->children as $op) {
+				if ($op instanceof Op\Terminal\Return_) {
+					$result[] = $op;
+					continue 2;
+					// Prevent dead code from executing
+				} elseif ($op instanceof Op\Stmt\Jump) {
+					if (!$processed->contains($op->target)) {
+						$toProcess->attach($op->target);
+					}
+					continue 2;
+				} elseif ($op instanceof Op\Stmt\JumpIf) {
+					if (!$processed->contains($op->if)) {
+						$toProcess->attach($op->if);
+					}
+					if (!$processed->contains($op->else)) {
+						$toProcess->attach($op->else);
+					}
+					continue 2;
+				} elseif ($op instanceof Op\Stmt\Switch_) {
+					foreach ($op->targets as $target) {
+						if (!$processed->contains($target)) {
+							$toProcess->attach($target);
+						}
+					}
+					continue 2;
 				}
-				return $result;
 			}
+			// If we reach here, we have an empty return default block, add it to the result
+			$result[] = null;
 		}
-		// If we reach here, we have an empty return default block, add it to the result
-		$result[] = null;
 		return $result;
 	}
 
 	protected function findTypedBlock($type, Block $block, $result = []) {
-		static $stack;
-		if (!$stack) {
-			$stack = new \SplObjectStorage;
-		}
-		if ($stack->contains($block)) {
-			return $result;
-		}
-		$stack->attach($block);
-		foreach ($block->children as $op) {
-			if ($op->getType() === $type) {
-				$result[] = $op;
+		$toProcess = new \SplObjectStorage;
+		$processed = new \SplObjectStorage;
+		$toProcess->attach($block);
+		foreach ($toProcess as $block) {
+			$toProcess->detach($block);
+			$processed->attach($block);
+			foreach ($block->children as $op) {
+				if ($op->getType() === $type) {
+					$result[] = $op;
+				}
+				foreach ($op->getSubBlocks() as $name) {
+					$sub = $op->$name;
+					if (is_null($sub)) {
+						continue;
+					}
+					if (!is_array($sub)) {
+						$sub = [$sub];
+					}
+					foreach ($sub as $subb) {
+						if (!$processed->contains($subb)) {
+							$toProcess->attach($subb);
+						}
+					}
+				}
 			}
-			foreach ($op->getSubBlocks() as $name) {
-				$sub = $op->$name;
-				if (is_null($sub)) {
-					continue;
-				}
-				if (!is_array($sub)) {
-					$sub = [$sub];
-				}
-				foreach ($sub as $subb) {
-					$result = $this->findTypedBlock($type, $subb, $result);
-				}
-			}
 		}
-		$stack->detach($block);
 		return $result;
 	}
 
