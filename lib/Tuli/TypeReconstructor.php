@@ -219,6 +219,14 @@ class TypeReconstructor {
 				return [new Type(Type::TYPE_LONG)];
 			case 'Expr_Cast_Double':
 				return [new Type(Type::TYPE_DOUBLE)];
+			case 'Expr_Cast_Object':
+				if ($resolved->contains($op->expr)) {
+					if ($resolved[$op->expr]->type === Type::TYPE_USER) {
+						return [$resolved[$op->expr]];
+					}
+					return [new Type(Type::TYPE_USER, null, 'stdClass')];
+				}
+				break;
 			case 'Expr_Clone':
 				if ($resolved->contains($op->expr)) {
 					return [$resolved[$op->expr]];
