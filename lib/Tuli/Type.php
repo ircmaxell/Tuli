@@ -57,7 +57,7 @@ class Type {
     			return 'void';
     		case Type::TYPE_ARRAY:
     		case Type::TYPE_HASH:
-    			return 'array':
+    			return 'array';
     		case Type::TYPE_OBJECT:
     			return 'object';
     		case Type::TYPE_USER:
