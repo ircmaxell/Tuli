@@ -61,7 +61,7 @@ class TypeResolver {
 
 	protected function resolveVar(Operand $var, \SplObjectStorage $resolved) {
 		$types = [];
-		foreach ($var->dag->predecessorsOf($var) as $prev) {
+		foreach ($var->ops as $prev) {
 			$type = $this->resolveVarOp($var, $prev, $resolved);
 			if ($type) {
 				foreach ($type as $t) {
@@ -133,7 +133,14 @@ class TypeResolver {
 					}
 				}
 				break;
-
+			case 'Expr_BitwiseNot':
+				if ($resolved->contains($op->expr)) {
+					if ($resolved[$op->expr]->type === Type::TYPE_STRING) {
+						return [new Type(Type::TYPE_STRING)];
+					}
+					return [new Type(Type::TYPE_LONG)];
+				}
+				break;
 			case 'Expr_BinaryOp_Div':
 			case 'Expr_BinaryOp_Plus':
 			case 'Expr_BinaryOp_Minus':
@@ -171,8 +178,11 @@ class TypeResolver {
 			case 'Expr_BinaryOp_Mod':
 			case 'Expr_BinaryOp_ShiftLeft':
 			case 'Expr_BinaryOp_ShiftRight':
+			case 'Expr_Cast_Int':
 			case 'Expr_Print':
 				return [new Type(Type::TYPE_LONG)];
+			case 'Expr_Cast_Double':
+				return [new Type(Type::TYPE_DOUBLE)];
 			case 'Expr_Clone':
 				if ($resolved->contains($op->expr)) {
 					return [$resolved[$op->expr]];
@@ -196,6 +206,12 @@ class TypeResolver {
 					}
 				}
 				break;
+			case 'Expr_List':
+				if ($op->result === $var) {
+					return [new Type(Type::TYPE_ARRAY, new Type(Type::TYPE_MIXED))];
+				}
+				// TODO: infer this
+				return [new Type(Type::TYPE_MIXED)];
 			case 'Expr_New':
 				if ($op->class instanceof Operand\Literal) {
 					return [new Type(Type::TYPE_USER, null, $op->class->value)];
@@ -210,6 +226,7 @@ class TypeResolver {
 			case 'Expr_Include':
 			case 'Expr_PropertyFetch':
 			case 'Expr_StaticPropertyFetch':
+			case 'Stmt_Property':
 				// TODO: we may be able to determine these...
 				return [new Type(Type::TYPE_MIXED)];
 			case 'Expr_UnaryMinus':
@@ -218,7 +235,7 @@ class TypeResolver {
 					switch ($resolved[$op->expr]->type) {
 						case Type::TYPE_LONG:
 						case Type::TYPE_DOUBLE:
-							return [$resolved[$op->expr]->type];
+							return [$resolved[$op->expr]];
 					}
 					return [new Type(Type::TYPE_NUMERIC)];
 				}

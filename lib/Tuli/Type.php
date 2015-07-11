@@ -111,7 +111,10 @@ class Type {
     public function equals($type) {
     	if (is_string($type)) {
     		$type = Type::fromDecl($type);
-    	}
+    	} elseif (!$type instanceof Type) {
+            var_dump($type);
+            throw new \RuntimeException("Type is not a type");
+        }
     	if ($type->type !== $this->type) {
     		return false;
     	}
