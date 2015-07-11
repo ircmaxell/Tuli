@@ -197,6 +197,7 @@ class TypeResolver {
 					return [Type::fromDecl($op->type->value)];
 				}
 				return [new Type(Type::TYPE_MIXED)];
+			case 'Expr_Yield':
 			case 'Expr_Include':
 			case 'Expr_PropertyFetch':
 			case 'Expr_StaticPropertyFetch':
@@ -213,7 +214,8 @@ class TypeResolver {
 					return [new Type(Type::TYPE_NUMERIC)];
 				}
 				break;
-			case 'Expr_Yield':
+
+			case 'Expr_Eval':
 				return [new Type(Type::TYPE_MIXED)];
 			case 'Iterator_Key':
 				if ($resolved->contains($op->var)) {
