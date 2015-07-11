@@ -292,8 +292,34 @@ class TypeReconstructor {
 					return [new Type(Type::TYPE_MIXED)];
 				}
 				break;
-			case 'Expr_ConstFetch':
 			case 'Expr_MethodCall':
+				if (!$op->name instanceof Operand\Literal) {
+					// variable method call
+					return [new Type(Type::TYPE_MIXED)];
+				}
+				if ($resolved->contains($op->var)) {
+					if ($resolved[$op->var]->type !== Type::TYPE_USER) {
+						return [new Type(Type::TYPE_MIXED)];
+					}
+					$className = strtolower($resolved[$op->var]->userType);
+					if (!isset($this->components['typeMatrix'][$className])) {
+						return [new Type(Type::TYPE_MIXED)];
+					}
+					$types = [];
+					foreach ($this->components['typeMatrix'][$className] as $class) {
+						$method = $this->findMethod($class, $op->name->value);
+						if (!$method) {
+							continue;
+						}
+						if (!$method->returnType) {
+							return [new Type(Type::TYPE_MIXED)];
+						}
+						$types[] = Type::fromDecl($method->returnType->value);
+					}
+					return $types;
+				}
+				break;
+			case 'Expr_ConstFetch':
 			case 'Expr_StaticCall':
 			case 'Expr_ClassConstFetch':
 				//TODO
@@ -317,6 +343,20 @@ class TypeReconstructor {
 				throw new \RuntimeException("Unknown operand prefix type: " . $op->getType());
 		}
 		return false;
+	}
+
+	protected function findMethod($class, $name) {
+		foreach ($class->stmts->children as $stmt) {
+			if ($stmt instanceof Op\Stmt\ClassMethod) {
+				if (strtolower($stmt->name->value) === $name) {
+					return $stmt;
+				}
+			}
+		}
+		if ($name !== '__call') {
+			return $this->findMethod($class, '__call');
+		}
+		return null;
 	}
 
 }

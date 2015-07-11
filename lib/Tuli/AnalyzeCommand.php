@@ -118,6 +118,7 @@ class AnalyzeCommand extends Command {
 	}
 
 	protected function computeTypeMatrix($declarations) {
+		// TODO: This is dirty and broken, fix it
 		$classes = $declarations->getClasses();
 		$interfaces = $declarations->getInterfaces();
 
