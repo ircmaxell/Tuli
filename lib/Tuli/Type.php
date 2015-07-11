@@ -55,6 +55,19 @@ class Type {
     			return 'unknown';
     		case Type::TYPE_VOID:
     			return 'void';
+    		case Type::TYPE_ARRAY:
+    		case Type::TYPE_HASH:
+    			return 'array':
+    		case Type::TYPE_OBJECT:
+    			return 'object';
+    		case Type::TYPE_USER:
+    			return $this->userType;
+    		case Type::TYPE_MIXED:
+    			return 'mixed';
+    		case Type::TYPE_CALLABLE:
+    			return 'callable';
+    		case Type::TYPE_NULL:
+    			return 'null';
     	}
     	throw new \RuntimeException("Unknown type thrown");
     }
