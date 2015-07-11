@@ -102,6 +102,12 @@ class TypeReconstructor {
 			if (is_null($same)) {
 				$same = $type;
 			} elseif (!$same->equals($type)) {
+				if ($same->resolves($type)) {
+					$same = $type;
+					continue;
+				} elseif ($type->resolves($same)) {
+					continue;
+				}
 				// Type changes with different call paths!
 				return false;
 			}
