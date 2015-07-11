@@ -128,10 +128,10 @@ class AnalyzeCommand extends Command {
 		foreach ($classes as $class) {
 			// Trivial case
 			$name = strtolower($class->name->value);
-			$matrix[$name] = [$class];
+			$matrix[$name] = [$name => $class];
 			if (isset($toProcess[$name])) {
 				foreach ($toProcess[$name] as $v) {
-					$matrix[$name][] = $v;
+					$matrix[$name][strtolower($v->name->value)] = $v;
 				}
 			} else {
 				$toProcess[$name] = [];
@@ -140,14 +140,14 @@ class AnalyzeCommand extends Command {
 				$extends = strtolower($class->extends->value);
 				$parents[$name][] = $extends;
 				if (isset($matrix[$extends])) {
-					$matrix[$extends][] = $class;
+					$matrix[$extends][strtolower($class->name->value)] = $class;
 					foreach ($toProcess[$name] as $v) {
-						$matrix[$extends][] = $v;
+						$matrix[$extends][strtolower($v->name->value)] = $v;
 					}
 					foreach ($parents[$extends] as $parent) {
-						$matrix[$parent][] = $class;
+						$matrix[$parent][strtolower($class->name->value)] = $class;
 						foreach ($toProcess[$name] as $v) {
-							$matrix[$parent][] = $v;
+							$matrix[$parent][strtolower($v->name->value)] = $v;
 						}
 					}
 				} else {
@@ -158,14 +158,14 @@ class AnalyzeCommand extends Command {
 				$interface = strtolower($implement->value);
 				$parents[$name][] = $interface;
 				if (isset($matrix[$interface])) {
-					$matrix[$interface][] = $class;
+					$matrix[$interface][strtolower($class->name->value)] = $class;
 					foreach ($toProcess[$name] as $v) {
-						$matrix[$interface][] = $v;
+						$matrix[$interface][strtolower($v->name->value)] = $v;
 					}
 					foreach ($parents[$interface] as $parent) {
-						$matrix[$parent][] = $class;
+						$matrix[$parent][strtolower($class->name->value)] = $class;
 						foreach ($toProcess[$name] as $v) {
-							$matrix[$parent][] = $v;
+							$matrix[$parent][strtolower($v->name->value)] = $v;
 						}
 					}
 				} else {
@@ -179,7 +179,7 @@ class AnalyzeCommand extends Command {
 			$name = strtolower($interface->name->value);
 			if (isset($toProcess[$name])) {
 				foreach ($toProcess[$name] as $v) {
-					$matrix[$name][] = $v;
+					$matrix[$name][strtolower($v->name->value)] = $v;
 				}
 			} else {
 				$toProcess[$name] = [];
@@ -216,7 +216,7 @@ class AnalyzeCommand extends Command {
 								$call[0]
 							);
 						} else {
-							if ($param->type && !$call[0]->args[$idx]->type->resolves(Type::fromDecl($param->type->value))) {
+							if ($param->type && $this->typeResolves($call->args[$idx]->type, Type::fromDecl($param->type->value))) {
 								$this->emitError(
 									"Type mismatch on $name() argument $idx, found {$call[0]->args[$idx]->type} expecting {$param->type->value}",
 									$call[0]
@@ -256,7 +256,7 @@ class AnalyzeCommand extends Command {
 							);
 						}
 					} else {
-						if (!$return->expr->type->resolves($type)) {
+						if (!$this->typeResolves($type, $return->expr->type)) {
 							$this->emitError(
 								"Type mismatch on $name() return value, found {$return->expr->type} expecting {$type}",
 								$return
@@ -285,7 +285,7 @@ class AnalyzeCommand extends Command {
 			$name = strtolower($call->var->type->userType);
 			// try looking it up
 			if (!isset($components['typeMatrix'][$name])) {
-				echo "Could not find $name\n";
+				echo "Could not find class $name\n";
 				continue;
 			}
 			foreach ($components['typeMatrix'][$name] as $class) {
@@ -301,7 +301,7 @@ class AnalyzeCommand extends Command {
 							$call
 						);
 					} else {
-						if ($param->type && !$call->args[$idx]->type->resolves(Type::fromDecl($param->type->value))) {
+						if ($param->type && $this->typeResolves($call->args[$idx]->type, Type::fromDecl($param->type->value))) {
 							$this->emitError(
 								"Type mismatch on $cn->{$call->name->value}() argument $idx, found {$call->args[$idx]->type} expecting {$param->type->value}",
 								$call
@@ -311,6 +311,18 @@ class AnalyzeCommand extends Command {
 				}
 			}
 		}
+	}
+
+	protected function typeResolves(Type $arg, Type $value) {
+		if ($arg->resolves($value)) {
+			return true;
+		}
+		if ($arg->type === Type::TYPE_USER && $value->type === Type::TYPE_USER) {
+			if (isset($this->components['typeMatrix'][strtolower($arg->userType)][strtolower($value->userType)])) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	protected function findMethod($class, $name) {

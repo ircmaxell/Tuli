@@ -183,6 +183,8 @@ class TypeReconstructor {
 						case [Type::TYPE_DOUBLE, TYPE::TYPE_DOUBLE]:
 						case [Type::TYPE_MIXED, TYPE::TYPE_DOUBLE]:
 						case [Type::TYPE_DOUBLE, TYPE::TYPE_MIXED]:
+						case [Type::TYPE_NUMERIC, TYPE::TYPE_DOUBLE]:
+						case [Type::TYPE_DOUBLE, TYPE::TYPE_NUMERIC]:
 							return [new Type(Type::TYPE_DOUBLE)];
 						case [Type::TYPE_MIXED, Type::TYPE_MIXED]:
 						case [Type::TYPE_MIXED, Type::TYPE_LONG]:
