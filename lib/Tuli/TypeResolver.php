@@ -133,6 +133,7 @@ class TypeResolver {
 					}
 				}
 				break;
+
 			case 'Expr_BinaryOp_Div':
 			case 'Expr_BinaryOp_Plus':
 			case 'Expr_BinaryOp_Minus':
@@ -144,7 +145,13 @@ class TypeResolver {
 						case [Type::TYPE_DOUBLE, TYPE::TYPE_LONG]:
 						case [Type::TYPE_LONG, TYPE::TYPE_DOUBLE]:
 						case [Type::TYPE_DOUBLE, TYPE::TYPE_DOUBLE]:
+						case [Type::TYPE_MIXED, TYPE::TYPE_DOUBLE]:
+						case [Type::TYPE_DOUBLE, TYPE::TYPE_MIXED]:
 							return [new Type(Type::TYPE_DOUBLE)];
+						case [Type::TYPE_MIXED, Type::TYPE_MIXED]:
+						case [Type::TYPE_MIXED, Type::TYPE_LONG]:
+						case [Type::TYPE_LONG, Type::TYPE_MIXED]:
+							return [new Type(Type::TYPE_NUMERIC)];
 						case [Type::TYPE_ARRAY, Type::TYPE_ARRAY]:
 							if ($resolved[$op->left]->subType->equals($resolved[$op->right]->subType)) {
 								return [new Type(Type::TYPE_ARRAY, $resolved[$op->left]->subType)];
@@ -162,6 +169,8 @@ class TypeResolver {
 			case 'Expr_ConcatList':
 				return [new Type(Type::TYPE_STRING)];
 			case 'Expr_BinaryOp_Mod':
+			case 'Expr_BinaryOp_ShiftLeft':
+			case 'Expr_BinaryOp_ShiftRight':
 			case 'Expr_Print':
 				return [new Type(Type::TYPE_LONG)];
 			case 'Expr_Clone':
