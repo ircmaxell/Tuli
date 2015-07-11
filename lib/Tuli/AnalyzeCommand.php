@@ -30,10 +30,13 @@ class AnalyzeCommand extends Command {
 		$parser = new CFGParser(new Parser(new Lexer));
 		$graphs = $this->getGraphsFromFiles($input->getArgument('files'), $input->getOption("exclude"), $parser);
 		$components = $this->preProcess($graphs, $output);
+
 		echo "Determining Variable Types\n";
-		$typeResolver = new TypeResolver;
-		$typeResolver->resolve($components);
+		$typeReconstructor = new TypeReconstructor;
+		$typeReconstructor->resolve($components);
+
 		echo "Detecting Type Conversion Issues\n";
+
 		echo "Detecting Function Argument Errors\n";
 		$this->detectFunctionCallClashes($components);
 
@@ -52,7 +55,6 @@ class AnalyzeCommand extends Command {
 		}
 		$part = implode('|', $excludeParts);
 		$excludeRegex = "(((\\.($part)($|/))|((^|/)($part)($|/))))";
-			var_dump($excludeRegex);
 		$graphs = [];
 		foreach ($files as $file) {
 			if (is_file($file)) {

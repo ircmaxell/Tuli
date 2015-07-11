@@ -2,11 +2,12 @@
 
 namespace Tuli;
 
+use PHPCfg\Block;
 use PHPCfg\Operand;
 use PHPCfg\Op;
 use Gliph\Graph\DirectedAdjacencyList;
 
-class TypeResolver {
+class TypeReconstructor {
 
 	protected $components;
 
@@ -15,7 +16,9 @@ class TypeResolver {
 		$resolved = new \SplObjectStorage;
 		$unresolved = new \SplObjectStorage;
 		foreach ($components['variables'] as $op) {
-			if ($op instanceof Operand\Literal) {
+			if (!empty($op->type) && $op->type->type !== Type::TYPE_UNKNOWN) {
+				$resolved[$op] = $op->type;
+			} elseif ($op instanceof Operand\Literal) {
 				$resolved[$op] = Type::fromValue($op->value);
 			} else {
 				$unresolved[$op] = new Type(Type::TYPE_UNKNOWN);
@@ -57,6 +60,26 @@ class TypeResolver {
 		foreach ($unresolved as $var) {
 			$var->type = $unresolved[$var];
 		}
+	}
+
+	protected function computeMergedType(array $types) {
+		if (count($types) === 1) {
+			return $types[0];
+		}
+		$same = null;
+		foreach ($types as $type) {
+			if (is_null($same)) {
+				$same = $type;
+			} elseif ($same && !$same->equals($type)) {
+				$same = false;
+			}
+		}
+		if ($same) {
+			return $same;
+		}
+		// different types
+		// TODO: implement this better to handle numeric
+		return new Type(Type::TYPE_MIXED);
 	}
 
 	protected function resolveVar(Operand $var, \SplObjectStorage $resolved) {
@@ -158,6 +181,11 @@ class TypeResolver {
 						case [Type::TYPE_MIXED, Type::TYPE_MIXED]:
 						case [Type::TYPE_MIXED, Type::TYPE_LONG]:
 						case [Type::TYPE_LONG, Type::TYPE_MIXED]:
+						case [Type::TYPE_NUMERIC, Type::TYPE_LONG]:
+						case [Type::TYPE_LONG, Type::TYPE_NUMERIC]:
+						case [Type::TYPE_NUMERIC, Type::TYPE_MIXED]:
+						case [Type::TYPE_MIXED, Type::TYPE_NUMERIC]:
+						case [Type::TYPE_NUMERIC, Type::TYPE_NUMERIC]:
 							return [new Type(Type::TYPE_NUMERIC)];
 						case [Type::TYPE_ARRAY, Type::TYPE_ARRAY]:
 							if ($resolved[$op->left]->subType->equals($resolved[$op->right]->subType)) {
@@ -205,6 +233,8 @@ class TypeResolver {
 						return $result;
 					}
 				}
+				// we can't resolve the function
+				return [new Type(Type::TYPE_MIXED)];
 				break;
 			case 'Expr_List':
 				if ($op->result === $var) {
@@ -267,6 +297,21 @@ class TypeResolver {
 			case 'Expr_StaticCall':
 			case 'Expr_ClassConstFetch':
 				//TODO
+				return [new Type(Type::TYPE_MIXED)];
+			case 'Phi':
+				$types = [];
+				foreach ($op->vars as $var) {
+					if ($resolved->contains($var)) {
+						$types[] = $resolved[$var];
+					} else {
+						// entire phi isn't resolved yet, can't process
+						continue 2;
+					}
+				}
+				$type = $this->computeMergedType($types);
+				if ($type) {
+					return [$type];
+				}
 				return false;
 			default:
 				throw new \RuntimeException("Unknown operand prefix type: " . $op->getType());

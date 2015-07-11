@@ -43,6 +43,24 @@ class Type {
         }
     }
 
+    public static function getAllPossibilities() {
+        return [
+            Type::TYPE_VOID,
+            Type::TYPE_LONG,
+            Type::TYPE_DOUBLE,
+            Type::TYPE_STRING,
+            Type::TYPE_BOOLEAN,
+            Type::TYPE_NULL,
+            Type::TYPE_MIXED,
+            Type::TYPE_NUMERIC,
+            Type::TYPE_USER,
+            Type::TYPE_ARRAY,
+            Type::TYPE_HASH,
+            Type::TYPE_CALLABLE,
+            Type::TYPE_OBJECT,
+        ];
+    }
+
     public function __toString() {
     	switch ($this->type) {
     		case Type::TYPE_BOOLEAN:
