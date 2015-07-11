@@ -59,7 +59,6 @@ class AnalyzeCommand extends Command {
 		foreach ($files as $file) {
 			if (is_file($file)) {
 				$files = [$file];
-				$graphs[$file] = $parser->parse(file_get_contents($file), $file);
 			} elseif (is_dir($file)) {
 				$it = new \CallbackFilterIterator(
 					new \RecursiveIteratorIterator(
@@ -277,8 +276,8 @@ class AnalyzeCommand extends Command {
 		foreach ($methodCalls as $call) {
 			assert(isset($call->var->type));
 			if (!$call->name instanceof Operand\Literal) {
-				var_dump($call->name);
-				die();
+				// variable method call, can't analyze (yet)
+				continue;
 			}
 			if ($call->var->type->type !== Type::TYPE_USER) {
 				continue;
@@ -365,7 +364,7 @@ class AnalyzeCommand extends Command {
 			$stack = new \SplObjectStorage;
 		}
 		if ($stack->contains($block)) {
-			return;
+			return $result;
 		}
 		$stack->attach($block);
 		foreach ($block->children as $op) {
