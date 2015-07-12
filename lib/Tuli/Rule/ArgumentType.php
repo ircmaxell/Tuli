@@ -66,7 +66,6 @@ class ArgumentType implements Rule {
 
 
     protected function verifyCall($func, $call, $components, $name) {
-        echo ".";
         $errors = [];
         foreach ($func->params as $idx => $param) {
             if (!isset($call->args[$idx]) && !$param->defaultVar) {

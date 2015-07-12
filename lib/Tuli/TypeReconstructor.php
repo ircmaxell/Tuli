@@ -19,7 +19,7 @@ class TypeReconstructor {
 			if (!empty($op->type) && $op->type->type !== Type::TYPE_UNKNOWN) {
 				$resolved[$op] = $op->type;
 			} elseif ($op instanceof Operand\Literal) {
-				$resolved[$op] = Type::fromValue($op->value);
+				$resolved[$op] = $op->type = Type::fromValue($op->value);
 			} else {
 				$unresolved[$op] = new Type(Type::TYPE_UNKNOWN);
 			}
@@ -271,7 +271,7 @@ class TypeReconstructor {
 				return [new Type(Type::TYPE_MIXED)];
 			case 'Expr_New':
 				if ($op->class instanceof Operand\Literal) {
-					return [new Type(Type::TYPE_USER, null, $op->class->value)];
+					return [new Type(Type::TYPE_USER, [], [$op->class->value])];
 				}
 				return [new Type(Type::TYPE_OBJECT)];
 			case 'Expr_Param':

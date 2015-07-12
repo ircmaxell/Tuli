@@ -38,7 +38,7 @@ class AnalyzeCommand extends Command {
 		'sh',
 		'.gitignore',
 		'LICENSE',
-		
+
 	];
 
 	protected $rules = [];
@@ -52,7 +52,7 @@ class AnalyzeCommand extends Command {
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output) {
-		$this->loadRules($input);
+		$this->loadRules();
 		$parser = new CFGParser(new Parser(new Lexer));
 		$graphs = $this->getGraphsFromFiles($input->getArgument('files'), $input->getOption("exclude"), $parser);
 		if ($input->getOption('dump')) {
@@ -63,7 +63,17 @@ class AnalyzeCommand extends Command {
 				echo "\n";
 			}
 		}
-		$components = $this->preProcess($graphs, $output);
+		$errors = $this->analyzeGraphs($graphs);
+		if ($errors) {
+			echo "\nErrors found:\n";
+			foreach ($errors as $error) {
+				$this->emitError($error[0], $error[1]);
+			}
+		}
+	}
+
+	public function analyzeGraphs($graphs) {
+		$components = $this->preProcess($graphs);
 		$components = $this->computeTypeMatrix($components);
 		$components['typeResolver'] = new TypeResolver($components);
 
@@ -76,15 +86,10 @@ class AnalyzeCommand extends Command {
 			echo "Executing rule: " . $rule->getName() . "\n";
 			$errors = array_merge($errors, $rule->execute($components));
 		}
-		if ($errors) {
-			echo "\nErrors found:\n";
-			foreach ($errors as $error) {
-				$this->emitError($error[0], $error[1]);
-			}
-		}
+		return $errors;
 	}
 
-	protected function loadRules(InputInterface $input) {
+	public function loadRules() {
 		$this->rules[] = new Rule\ArgumentType;
 		$this->rules[] = new Rule\ReturnType;
 	}
@@ -99,7 +104,7 @@ class AnalyzeCommand extends Command {
 		$graphs = [];
 		foreach ($files as $file) {
 			if (is_file($file)) {
-				$files = [$file];
+				$local = [$file];
 			} elseif (is_dir($file)) {
 				$it = new \CallbackFilterIterator(
 					new \RecursiveIteratorIterator(
@@ -112,14 +117,14 @@ class AnalyzeCommand extends Command {
 						return $file->isFile();
 					}
 				);
-				$files = [];
+				$local = [];
 				foreach ($it as $file) {
-					$files[] = $file->getPathName(); // since __toString would be too difficult...
+					$local[] = $file->getPathName(); // since __toString would be too difficult...
 				}
 			} else {
 				throw new \RuntimeException("Error: $file is not a file or directory");
 			}
-			foreach ($files as $file) {
+			foreach ($local as $file) {
 				echo "Analyzing $file\n";
 				$graphs[$file] = $parser->parse(file_get_contents($file), $file);
 			}
@@ -127,7 +132,7 @@ class AnalyzeCommand extends Command {
 		return $graphs;
 	}
 
-	protected function preProcess(array $blocks, OutputInterface $output) {
+	protected function preProcess(array $blocks) {
 		$traverser = new Traverser;
 		$declarations = new Visitor\DeclarationFinder;
 		$calls = new Visitor\CallFinder;
@@ -140,9 +145,7 @@ class AnalyzeCommand extends Command {
 		$traverser->addVisitor($variables);
 		foreach ($blocks as $block) {
 			$traverser->traverse($block);
-		}
-		$vars = $variables->getVariables();
-		
+		}		
 		return [
 			"cfg" => $blocks,
 			"traits" => $declarations->getTraits(),

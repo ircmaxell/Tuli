@@ -18,15 +18,13 @@ class Type {
     const TYPE_MIXED    = 1023; // all others combined
     
 	public $type = 0;
-	public $subType = 0;
-	public $userType = '';
+	public $subTypes = [];
+    public $userTypes = [];
 
-    public function __construct($type, Type $subType = null, $userType = '') {
+    public function __construct($type, array $subTypes = [], array $userTypes = []) {
         $this->type = $type;
-        if ($subType) {
-            $this->subType = $subType;
-        }
-        $this->userType = $userType;
+        $this->subTypes = $subTypes;
+        $this->userTypes = $userTypes;
     }
 
     public static function getPrimitives() {
@@ -45,6 +43,9 @@ class Type {
     }
 
     public function __toString() {
+        if ($this->type === Type::TYPE_UNKNOWN) {
+            return "unknown";
+        }
         $nullable = 0 !== ($this->type & Type::TYPE_NULL) ? '?' : '';
     	switch ($this->type & ~Type::TYPE_NULL) {
             case Type::TYPE_STRING:
@@ -60,14 +61,22 @@ class Type {
     		case Type::TYPE_VOID:
     			return $nullable . 'void';
     		case Type::TYPE_ARRAY:
-                if ($this->subType) {
-                    return $nullable . $this->subType . '[]';
+                if ($this->subTypes) {
+                    $return = [];
+                    foreach ($this->subTypes as $sub) {
+                        $return[] = $nullable . $sub . '[]';
+                    }
+                    return implode('|', $return);
                 }
     			return $nullable . 'array';
     		case Type::TYPE_OBJECT:
     			return $nullable . 'object';
     		case Type::TYPE_USER:
-    			return $nullable . $this->userType;
+                $return = [];
+                foreach ($this->userTypes as $type) {
+                    $return[] = $nullable . $type;
+                }
+    			return implode('|', $return);
     		case Type::TYPE_MIXED:
     			return $nullable . 'mixed';
     		case Type::TYPE_CALLABLE:
@@ -81,12 +90,16 @@ class Type {
         foreach (self::getPrimitives() as $primitive => $foundString) {
             if (0 !== ($primitive & $this->type)) {
                 $found |= $primitive;
-                if ($foundString === 'array' && $this->subType) {
-                    $foundStrings[] = (string) $this->subType . '[]';
+                if ($primitive === Type::TYPE_ARRAY && $this->subTypes) {
+                    foreach ($this->subTypes as $st) {
+                        $foundStrings[] = ($st) . '[]';
+                    }
                 } elseif ($foundString) {
                     $foundStrings[] = $foundString;
-                } else {
-                    die("handle classes");
+                } elseif ($primitive === Type::TYPE_USER) {
+                    foreach ($this->userTypes as $ut) {
+                        $foundStrings[] = $ut;
+                    }
                 }
             }
         }
@@ -138,28 +151,32 @@ class Type {
     		case 'string':
     			return new Type(Type::TYPE_STRING);
     		case 'array':
-    			return new Type(Type::TYPE_ARRAY, new Type(Type::TYPE_UNKNOWN));
+    			return new Type(Type::TYPE_ARRAY);
     		case 'callable':
     			return new Type(Type::TYPE_CALLABLE);
     	}
         if (strpos($decl, '|') !== false) {
             $parts = explode('|', $decl);
             $allowedTypes = 0;
+            $userTypes = [];
+            $subTypes = [];
             foreach ($parts as $part) {
                 $type = Type::fromDecl($part);
                 $allowedTypes |= $type->type;
+                $userTypes = array_merge($type->userTypes, $userTypes);
+                $subTypes = array_merge($type->subTypes, $subTypes);
             }
-            return new Type($allowedTypes);
+            return new Type($allowedTypes, $subTypes, $userTypes);
         }
         if (substr($decl, -2) === '[]') {
             $type = Type::fromDecl(substr($decl, 0, -2));
-            return new Type(Type::TYPE_ARRAY, $type);
+            return new Type(Type::TYPE_ARRAY, [$type]);
         }
         $regex = '(^([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\\\\)*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$)';
         if (!preg_match($regex, $decl)) {
             throw new \RuntimeException("Unknown type declaration found: $decl");
         }
-        return new Type(Type::TYPE_USER, null, $decl);
+        return new Type(Type::TYPE_USER, [], [$decl]);
     }
 
     public static function fromValue($value) {
@@ -183,7 +200,9 @@ class Type {
     		return $this->subType->equals($type->subType);
     	}
     	if ($type->type === Type::TYPE_USER) {
-    		return strtolower($type->userType) === strtolower($this->userType);
+            $left = array_map('strtolower', $type->userTypes);
+            $right = array_map('strtolower', $this->userTypes);
+            return array_diff($left, $right) === [] && array_diff($right, $left) === [];
     	}
     	return true;
     }
