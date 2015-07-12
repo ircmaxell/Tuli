@@ -126,7 +126,7 @@ class TypeReconstructor {
 			case 'Expr_Array':
 			case 'Expr_Cast_Array':
 				// Todo: determine subtypes better
-				return [new Type(Type::TYPE_ARRAY, new Type(Type::TYPE_MIXED))];
+				return [new Type(Type::TYPE_ARRAY)];
 			case 'Expr_ArrayDimFetch':
 				if ($resolved->contains($op->var)) {
 					// Todo: determine subtypes better
