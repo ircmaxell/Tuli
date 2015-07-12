@@ -26,10 +26,15 @@ class ReturnType implements Rule {
 
     protected function verifyReturn($function, array $components) {
         $errors = [];
-        if (!$function->returnType) {
-            return $errors;
+        if ($function->returnType) {
+            $type = Type::fromDecl($function->returnType->value);
+        } else {
+            $type = Type::extractTypeFromComment("return", $function->getAttribute('doccomment'));
+            if ($type->type === Type::TYPE_MIXED) {
+                // only verify actual types
+                return $errors;
+            }
         }
-        $type = Type::fromDecl($function->returnType->value);
         $returns = array_unique($this->findReturnBlocks($function->stmts), SORT_REGULAR);
         foreach ($returns as $return) {
             if (!$return || !$return->expr) {
@@ -43,7 +48,7 @@ class ReturnType implements Rule {
                     $errors[] = ["Explicit null return found for non-null type $type", $return];
                 }
             } else {
-                if (!$components['typeResolver']->resolves($type, $return->expr->type)) {
+                if (!$components['typeResolver']->resolves($return->expr->type, $type)) {
                     $errors[] = ["Type mismatch on return value, found {$return->expr->type} expecting {$type}", $return];
                 }
             }
@@ -55,38 +60,40 @@ class ReturnType implements Rule {
         $toProcess = new \SplObjectStorage;
         $processed = new \SplObjectStorage;
         $toProcess->attach($block);
-        foreach ($toProcess as $block) {
-            $toProcess->detach($block);
-            $processed->attach($block);
-            foreach ($block->children as $op) {
-                if ($op instanceof Op\Terminal\Return_) {
-                    $result[] = $op;
-                    continue 2;
-                    // Prevent dead code from executing
-                } elseif ($op instanceof Op\Stmt\Jump) {
-                    if (!$processed->contains($op->target)) {
-                        $toProcess->attach($op->target);
-                    }
-                    continue 2;
-                } elseif ($op instanceof Op\Stmt\JumpIf) {
-                    if (!$processed->contains($op->if)) {
-                        $toProcess->attach($op->if);
-                    }
-                    if (!$processed->contains($op->else)) {
-                        $toProcess->attach($op->else);
-                    }
-                    continue 2;
-                } elseif ($op instanceof Op\Stmt\Switch_) {
-                    foreach ($op->targets as $target) {
-                        if (!$processed->contains($target)) {
-                            $toProcess->attach($target);
+        while ($toProcess->count() > 0) {
+            foreach ($toProcess as $block) {
+                $toProcess->detach($block);
+                $processed->attach($block);
+                foreach ($block->children as $op) {
+                    if ($op instanceof Op\Terminal\Return_) {
+                        $result[] = $op;
+                        continue 2;
+                        // Prevent dead code from executing
+                    } elseif ($op instanceof Op\Stmt\Jump) {
+                        if (!$processed->contains($op->target)) {
+                            $toProcess->attach($op->target);
                         }
+                        continue 2;
+                    } elseif ($op instanceof Op\Stmt\JumpIf) {
+                        if (!$processed->contains($op->if)) {
+                            $toProcess->attach($op->if);
+                        }
+                        if (!$processed->contains($op->else)) {
+                            $toProcess->attach($op->else);
+                        }
+                        continue 2;
+                    } elseif ($op instanceof Op\Stmt\Switch_) {
+                        foreach ($op->targets as $target) {
+                            if (!$processed->contains($target)) {
+                                $toProcess->attach($target);
+                            }
+                        }
+                        continue 2;
                     }
-                    continue 2;
                 }
+                // If we reach here, we have an empty return default block, add it to the result
+                $result[] = null;
             }
-            // If we reach here, we have an empty return default block, add it to the result
-            $result[] = null;
         }
         return $result;
     }

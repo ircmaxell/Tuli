@@ -10,11 +10,21 @@ class TypeResolver {
         $this->components = $components;
     }
 
+    public function allowsNull(Type $type) {
+        if (($type->type & Type::NULL) !== 0) {
+            return true;
+        }
+        return false;
+    }
+
     public function resolves(Type $a, Type $b) {
         if ($a->equals($b)) {
             return true;
         }
         if ($a->type === Type::TYPE_LONG && $b->type === Type::TYPE_DOUBLE) {
+            return true;
+        }
+        if (($b->type & $a->type) === $a->type) {
             return true;
         }
         if ($a->type === Type::TYPE_USER && $b->type === Type::TYPE_USER) {

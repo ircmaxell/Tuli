@@ -3,97 +3,127 @@
 namespace Tuli;
 
 class Type {
-	const TYPE_UNKNOWN = -1;
-	const TYPE_VOID = 1;
-	const TYPE_LONG = 2;
-	const TYPE_DOUBLE = 3;
-	const TYPE_STRING = 4;
-	const TYPE_BOOLEAN = 5;
-	const TYPE_NULL = 6;
-	const TYPE_MIXED = 7;
-	const TYPE_NUMERIC = 8;
-	const TYPE_USER = 9;
-	const TYPE_ARRAY = 10;
-	const TYPE_HASH = 11;
-	const TYPE_CALLABLE = 12;
-	const TYPE_OBJECT = 13; // unknown object type
-
+	const TYPE_UNKNOWN  = -1;
+	const TYPE_VOID     = 1;
+	const TYPE_LONG     = 2;
+	const TYPE_DOUBLE   = 4;
+    const TYPE_NUMERIC  = 6; // 2 | 4
+	const TYPE_STRING   = 8;
+	const TYPE_BOOLEAN  = 16;
+	const TYPE_NULL     = 32;
+	const TYPE_USER     = 64;
+	const TYPE_ARRAY    = 128;
+	const TYPE_CALLABLE = 256;
+	const TYPE_OBJECT   = 512; // unknown object type
+    const TYPE_MIXED    = 1023; // all others combined
+    
 	public $type = 0;
 	public $subType = 0;
 	public $userType = '';
 
     public function __construct($type, Type $subType = null, $userType = '') {
         $this->type = $type;
-        if ($this->type == self::TYPE_ARRAY) {
-            if ($subType) {
-                $this->subType = $subType;
-            } else {
-                throw new \InvalidArgumentException("Complex type must have subtype specified");
-            }
-        } elseif ($subType) {
-            throw new \InvalidArgumentException('SubTypes should only be provided to complex types');
+        if ($subType) {
+            $this->subType = $subType;
         }
-        if ($type === self::TYPE_USER) {
-            if (empty($userType)) {
-                throw new \InvalidArgumentException('User type must have a specifier');
-            }
-            $this->userType = $userType;
-        } elseif ($userType) {
-            throw new \InvalidArgumentException('User type information should only be provided to user types');
-        }
+        $this->userType = $userType;
     }
 
-    public static function getAllPossibilities() {
+    public static function getPrimitives() {
         return [
-            Type::TYPE_VOID,
-            Type::TYPE_LONG,
-            Type::TYPE_DOUBLE,
-            Type::TYPE_STRING,
-            Type::TYPE_BOOLEAN,
-            Type::TYPE_NULL,
-            Type::TYPE_MIXED,
-            Type::TYPE_NUMERIC,
-            Type::TYPE_USER,
-            Type::TYPE_ARRAY,
-            Type::TYPE_HASH,
-            Type::TYPE_CALLABLE,
-            Type::TYPE_OBJECT,
+            Type::TYPE_VOID => 'void',
+            Type::TYPE_LONG => 'int',
+            Type::TYPE_DOUBLE => 'float',
+            Type::TYPE_STRING => 'string',
+            Type::TYPE_BOOLEAN => 'bool',
+            Type::TYPE_NULL => 'null',
+            Type::TYPE_USER => '',
+            Type::TYPE_ARRAY => 'array',
+            Type::TYPE_CALLABLE => 'callable',
+            Type::TYPE_OBJECT => 'object',
         ];
     }
 
     public function __toString() {
-    	switch ($this->type) {
+        $nullable = 0 !== ($this->type & Type::TYPE_NULL) ? '?' : '';
+    	switch ($this->type & ~Type::TYPE_NULL) {
+            case Type::TYPE_STRING:
+                return $nullable . 'string';
     		case Type::TYPE_BOOLEAN:
-    			return 'bool';
+    			return $nullable . 'bool';
     		case Type::TYPE_LONG:
-    			return 'int';
+    			return $nullable . 'int';
     		case Type::TYPE_DOUBLE:
-    			return 'float';
+    			return $nullable . 'float';
     		case Type::TYPE_UNKNOWN:
-    			return 'unknown';
+    			return $nullable . 'unknown';
     		case Type::TYPE_VOID:
-    			return 'void';
+    			return $nullable . 'void';
     		case Type::TYPE_ARRAY:
-    		case Type::TYPE_HASH:
-    			return 'array';
+                if ($this->subType) {
+                    return $nullable . $this->subType . '[]';
+                }
+    			return $nullable . 'array';
     		case Type::TYPE_OBJECT:
-    			return 'object';
+    			return $nullable . 'object';
     		case Type::TYPE_USER:
-    			return $this->userType;
+    			return $nullable . $this->userType;
     		case Type::TYPE_MIXED:
-    			return 'mixed';
+    			return $nullable . 'mixed';
     		case Type::TYPE_CALLABLE:
-    			return 'callable';
-    		case Type::TYPE_NULL:
-    			return 'null';
+    			return $nullable . 'callable';
     	}
+        if ($this->type === Type::TYPE_NULL) {
+            return 'null';
+        }
+        $found = 0;
+        $foundStrings = [];
+        foreach (self::getPrimitives() as $primitive => $foundString) {
+            if (0 !== ($primitive & $this->type)) {
+                $found |= $primitive;
+                if ($foundString === 'array' && $this->subType) {
+                    $foundStrings[] = (string) $this->subType . '[]';
+                } elseif ($foundString) {
+                    $foundStrings[] = $foundString;
+                } else {
+                    die("handle classes");
+                }
+            }
+        }
+        if ($found === $this->type) {
+            return implode('|', $foundStrings);
+        }
+        var_dump($this->type);
     	throw new \RuntimeException("Unknown type thrown");
+    }
+
+    public static function extractTypeFromComment($kind, $comment, $name = '') {
+        switch ($kind) {
+            case 'return':
+                if (preg_match('(@return\s+(\S+))', $comment, $match)) {
+                    $return = Type::fromDecl($match[1]);
+                    return $return;
+                }
+                break;
+            case 'param':
+                if (preg_match("(@param\\s+(\\S+)\\s+\\\${$name})i", $comment, $match)) {
+                    $param = Type::fromDecl($match[1]);
+                    return $param;
+                }
+                break;
+        }
+        return new Type(Type::TYPE_MIXED);
     }
 
     public static function fromDecl($decl) {
     	if ($decl instanceof Type) {
     		return $decl;
-    	}
+    	} elseif (!is_string($decl)) {
+            throw new \LogicException("Should never happen");
+        }
+        if ($decl[0] === '\\') {
+            $decl = substr($decl, 1);
+        }
     	switch (strtolower($decl)) {
     		case 'bool':
     			return new Type(Type::TYPE_BOOLEAN);
@@ -107,10 +137,25 @@ class Type {
     			return new Type(Type::TYPE_ARRAY, new Type(Type::TYPE_UNKNOWN));
     		case 'callable':
     			return new Type(Type::TYPE_CALLABLE);
-    		default:
-    			return new Type(Type::TYPE_USER, null, $decl);
-
     	}
+        if (strpos($decl, '|') !== false) {
+            $parts = explode('|', $decl);
+            $allowedTypes = 0;
+            foreach ($parts as $part) {
+                $type = Type::fromDecl($part);
+                $allowedTypes |= $type->type;
+            }
+            return new Type($allowedTypes);
+        }
+        if (substr($decl, -2) === '[]') {
+            $type = Type::fromDecl(substr($decl, 0, -2));
+            return new Type(Type::TYPE_ARRAY, $type);
+        }
+        $regex = '(^([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\\\\)*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$)';
+        if (!preg_match($regex, $decl)) {
+            throw new \RuntimeException("Unknown type declaration found: $decl");
+        }
+        return new Type(Type::TYPE_USER, null, $decl);
     }
 
     public static function fromValue($value) {
@@ -126,13 +171,7 @@ class Type {
     	throw new \RuntimeException("Unknown value type found: " . gettype($value));
     }
 
-    public function equals($type) {
-    	if (is_string($type)) {
-    		$type = Type::fromDecl($type);
-    	} elseif (!$type instanceof Type) {
-            var_dump($type);
-            throw new \RuntimeException("Type is not a type");
-        }
+    public function equals(Type $type) {
     	if ($type->type !== $this->type) {
     		return false;
     	}

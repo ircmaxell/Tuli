@@ -4,6 +4,8 @@ namespace Tuli\Rule;
 
 use Tuli\Rule;
 use Tuli\Type;
+use PHPCfg\Operand;
+use PHPCfg\Op;
 
 class ArgumentType implements Rule {
     
@@ -31,13 +33,12 @@ class ArgumentType implements Rule {
                 continue;
             }
             $name = strtolower($call->var->type->userType);
-            if (!isset($components['typeMatrix'][$name])) {
+            if (!isset($components['resolves'][$name])) {
                 // Could not find class
                 continue;
             }
-            foreach ($components['typeMatrix'][$name] as $class) {
+            foreach ($components['resolves'][$name] as $cn => $class) {
                 // For every possible class that can resolve the type
-                $cn = $class->name->value;
                 $method = $this->findMethod($class, $name);
                 if (!$method) {
                     // Class does not *directly* implement method
@@ -65,14 +66,23 @@ class ArgumentType implements Rule {
 
 
     protected function verifyCall($func, $call, $components, $name) {
+        echo ".";
         $errors = [];
         foreach ($func->params as $idx => $param) {
             if (!isset($call->args[$idx]) && !$param->defaultVar) {
                 $errors[] = ["Missing required argument $idx for call $name()", $call];
                 continue;
             }
-            if ($param->type && !$components['typeResolver']->resolves($call->args[$idx]->type, Type::fromDecl($param->type->value))) {
-                $errors[] = ["Type mismatch on $name() argument $idx, found {$call->args[$idx]->type} expecting {$param->type->value}", $call];
+            if ($param->type) {
+                $type = Type::fromDecl($param->type->value);
+            } else {
+                $type = Type::extractTypeFromComment("param", $param->function->getAttribute('doccomment'), $param->name->value);
+                if ($type->type === Type::TYPE_MIXED) {
+                    continue;
+                }
+            }
+            if (!$components['typeResolver']->resolves($call->args[$idx]->type, $type)) {
+                $errors[] = ["Type mismatch on $name() argument $idx, found {$call->args[$idx]->type} expecting {$type}", $call];
             }
         }
         return $errors;

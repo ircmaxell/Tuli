@@ -11,6 +11,7 @@ use Symfony\Component\Console\Input\InputOption;
 use PhpParser\Parser;
 use PhpParser\Lexer;
 use PHPCfg\Parser as CFGParser;
+use PHPCfg\Dumper;
 use PHPCfg\Block;
 use PHPCfg\Visitor;
 use PHPCfg\Traverser;
@@ -19,12 +20,28 @@ use PHPCfg\Op;
 
 class AnalyzeCommand extends Command {
 
+	protected $defaultSkipExtensions = [
+		'md',
+		'markdown',
+		'xml',
+		'rst',
+		'phpt',
+		'.git',
+		'json',
+		'yml',
+		'dist',
+		'test',
+		'parser',
+		'build',
+	];
+
 	protected $rules = [];
 
 	protected function configure() {
 		$this->setName('analyze')
 			->setDescription('Analyze the provided files')
-			->addOption('exclude', 'x', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, "Extensions To Exclude?", ["md", "xml", "yml", "json"])
+			->addOption('exclude', 'x', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, "Extensions To Exclude?", $this->defaultSkipExtensions)
+			->addOption('dump', 'd', InputOption::VALUE_NONE, "Dump the graph", null)
 			->addArgument('files', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'The files to analyze');
 	}
 
@@ -32,6 +49,14 @@ class AnalyzeCommand extends Command {
 		$this->loadRules($input);
 		$parser = new CFGParser(new Parser(new Lexer));
 		$graphs = $this->getGraphsFromFiles($input->getArgument('files'), $input->getOption("exclude"), $parser);
+		if ($input->getOption('dump')) {
+			$dumper = new Dumper;
+			foreach ($graphs as $key => $graph) {
+				echo "Graph #$key\n";
+				echo $dumper->dump($graph);
+				echo "\n";
+			}
+		}
 		$components = $this->preProcess($graphs, $output);
 		$components = $this->computeTypeMatrix($components);
 		$components['typeResolver'] = new TypeResolver($components);
@@ -40,7 +65,6 @@ class AnalyzeCommand extends Command {
 		$typeReconstructor = new TypeReconstructor;
 		$typeReconstructor->resolve($components);
 
-		echo "Detecting Type Conversion Issues\n";
 		$errors = [];
 		foreach ($this->rules as $rule) {
 			echo "Executing rule: " . $rule->getName() . "\n";
@@ -204,24 +228,26 @@ class AnalyzeCommand extends Command {
 		$toProcess = new \SplObjectStorage;
 		$processed = new \SplObjectStorage;
 		$toProcess->attach($block);
-		foreach ($toProcess as $block) {
-			$toProcess->detach($block);
-			$processed->attach($block);
-			foreach ($block->children as $op) {
-				if ($op->getType() === $type) {
-					$result[] = $op;
-				}
-				foreach ($op->getSubBlocks() as $name) {
-					$sub = $op->$name;
-					if (is_null($sub)) {
-						continue;
+		while (count($toProcess) > 0) {
+			foreach ($toProcess as $block) {
+				$toProcess->detach($block);
+				$processed->attach($block);
+				foreach ($block->children as $op) {
+					if ($op->getType() === $type) {
+						$result[] = $op;
 					}
-					if (!is_array($sub)) {
-						$sub = [$sub];
-					}
-					foreach ($sub as $subb) {
-						if (!$processed->contains($subb)) {
-							$toProcess->attach($subb);
+					foreach ($op->getSubBlocks() as $name) {
+						$sub = $op->$name;
+						if (is_null($sub)) {
+							continue;
+						}
+						if (!is_array($sub)) {
+							$sub = [$sub];
+						}
+						foreach ($sub as $subb) {
+							if (!$processed->contains($subb)) {
+								$toProcess->attach($subb);
+							}
 						}
 					}
 				}
