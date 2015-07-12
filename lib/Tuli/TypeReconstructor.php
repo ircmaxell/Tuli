@@ -74,6 +74,8 @@ class TypeReconstructor {
 		foreach ($types as $key => $type) {
 			if (is_string($type)) {
 				$type = $types[$key] = Type::fromDecl($type);
+			} elseif (!$type instanceof Type) {
+				throw new \RuntimeException("Invalid type found");
 			}
 			if (is_null($same)) {
 				$same = $type;
@@ -95,10 +97,6 @@ class TypeReconstructor {
 			$userTypes = array_merge($userTypes, $type->userTypes);
 			$subTypes = array_merge($subTypes, $type->subTypes);
 		}
-		if ($value === 0) {
-			var_dump($types);
-		}
-		assert($value !== 0);
 		return new Type($value, $userTypes, $subTypes);
 	}
 
@@ -361,10 +359,57 @@ class TypeReconstructor {
 				}
 				break;
 			case 'Expr_ConstFetch':
+				if ($op->name instanceof Operand\Literal) {
+					$constant = strtolower($op->name->value);
+					switch ($constant) {
+						case 'true':
+						case 'false':
+							return [new Type(Type::TYPE_BOOLEAN)];
+						case 'null':
+							return [new Type(Type::TYPE_NULL)];
+						default:
+							if (isset($this->components['constants'][$op->name->value])) {
+								$return = [];
+								foreach ($this->components['constants'][$op->name->value] as $value) {
+									if (!$resolved->contains($value->value)) {
+										return false;
+									}
+									$return[] = $resolved[$value->value];
+								}
+								return $return;
+							}
+					}
+				}
+				return [new Type(Type::TYPE_MIXED)];
 			case 'Expr_StaticCall':
+				return [new Type(Type::TYPE_MIXED)];
 			case 'Expr_ClassConstFetch':
 				//TODO
-				return [new Type(Type::TYPE_MIXED)];
+				$classes = [];
+				if ($op->class instanceof Operand\Literal) {
+					$class = strtolower($op->class->value);
+					return $this->resolveClassConstant($class, $op, $resolved);
+				} elseif ($resolved->contains($op->class)) {
+					$type = $resolved[$op->class];
+					if ($type->type !== Type::TYPE_USER) {
+						// give up
+						return [new Type(Type::TYPE_MIXED)];
+					}
+					$types = [];
+					foreach ($type->userTypes as $type) {
+						$try = $this->resolveClassConstant(strtolower($type), $op, $resolved);
+						if ($try) {
+							$types = array_merge($types, $try);
+						} else {
+							return false;
+						}
+					}
+					if ($types) {
+						return $types;
+					}
+					return [new Type(Type::TYPE_MIXED)];
+				}
+				return false;
 			case 'Phi':
 				$types = [];
 				foreach ($op->vars as $var) {
@@ -471,6 +516,44 @@ class TypeReconstructor {
 		}
 		//var_dump($assertions);
 		return $assertions;
+	}
+
+	protected function resolveClassConstant($class, $op, $resolved) {
+		$try = $class . '::' . $op->name->value;
+		if (isset($this->components['constants'][$try])) {
+			$types = [];
+			foreach ($this->components['constants'][$try] as $const) {
+				if ($resolved->contains($const->value)) {
+					$types[] = $resolved[$const->value];
+				} else {
+					// Not every
+					return false;
+				}
+			}
+			return $types;
+		}
+		if (!isset($this->components['resolvedBy'][$class])) {
+			// can't find classes
+			return [new Type(Type::TYPE_MIXED)];
+		}
+		$types = [];
+		foreach ($this->components['resolves'][$class] as $name => $_) {
+			$try = $name . '::' . $op->name->value;
+			if (isset($this->components['constants'][$try])) {
+				foreach ($this->components['constants'][$try] as $const) {
+					if ($resolved->contains($const->value)) {
+						$types[] = $resolved[$const->value];
+					} else {
+						// Not every is resolved yet
+						return false;
+					}
+				}
+			}
+		}
+		if (empty($types)) {
+			return [new Type(Type::TYPE_MIXED)];
+		}
+		return $types;
 	}
 
 }

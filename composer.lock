@@ -130,12 +130,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ircmaxell/php-cfg.git",
-                "reference": "f1f80c1780e9b38d46e2b267f409f5900f215cb7"
+                "reference": "eee945a23fae135fb70349d611d9f9b01512ec1f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/f1f80c1780e9b38d46e2b267f409f5900f215cb7",
-                "reference": "f1f80c1780e9b38d46e2b267f409f5900f215cb7",
+                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/eee945a23fae135fb70349d611d9f9b01512ec1f",
+                "reference": "eee945a23fae135fb70349d611d9f9b01512ec1f",
                 "shasum": ""
             },
             "require": {
@@ -165,7 +165,7 @@
                 }
             ],
             "description": "A Control Flow Graph implementation for PHP",
-            "time": "2015-07-12 21:12:55"
+            "time": "2015-07-12 22:36:30"
         },
         {
             "name": "nikic/php-parser",
@@ -173,12 +173,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "5bd8cb84de57b3a4f330e247f3eb67d2924b1a59"
+                "reference": "0265c28e6e8cb5b180105b4afe0e89b728bfc7f9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/5bd8cb84de57b3a4f330e247f3eb67d2924b1a59",
-                "reference": "5bd8cb84de57b3a4f330e247f3eb67d2924b1a59",
+                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/0265c28e6e8cb5b180105b4afe0e89b728bfc7f9",
+                "reference": "0265c28e6e8cb5b180105b4afe0e89b728bfc7f9",
                 "shasum": ""
             },
             "require": {
@@ -210,7 +210,7 @@
                 "parser",
                 "php"
             ],
-            "time": "2015-07-12 20:53:17"
+            "time": "2015-07-12 21:56:57"
         },
         {
             "name": "phploc/phploc",

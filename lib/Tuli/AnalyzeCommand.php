@@ -147,6 +147,7 @@ class AnalyzeCommand extends Command {
 		}		
 		return [
 			"cfg" => $blocks,
+			"constants" => $declarations->getConstants(),
 			"traits" => $declarations->getTraits(),
 			"classes" => $declarations->getClasses(),
 			"methods" => $declarations->getMethods(),
@@ -218,6 +219,16 @@ class AnalyzeCommand extends Command {
 			}
 		}
 		$components['resolves'] = $map;
+		$components['resolvedBy'] = [];
+		foreach ($map as $child => $parent) {
+			foreach ($parent as $name => $_) {
+				if (!isset($components['resolvedBy'][$name])) {
+					$components['resolvedBy'][$name] = [];
+				}
+				//allows iterating and looking up
+				$components['resolvedBy'][$name][$child] = $child;
+			}
+		}
 		return $components; 
 	}
 
