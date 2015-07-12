@@ -8,8 +8,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-use PhpParser\Parser;
-use PhpParser\Lexer;
+use PhpParser\ParserFactory;
 use PHPCfg\Parser as CFGParser;
 use PHPCfg\Dumper;
 use PHPCfg\Block;
@@ -53,7 +52,7 @@ class AnalyzeCommand extends Command {
 
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$this->loadRules();
-		$parser = new CFGParser(new Parser(new Lexer));
+		$parser = new CFGParser((new ParserFactory)->create(ParserFactory::PREFER_PHP7));
 		$graphs = $this->getGraphsFromFiles($input->getArgument('files'), $input->getOption("exclude"), $parser);
 		if ($input->getOption('dump')) {
 			$dumper = new Dumper;

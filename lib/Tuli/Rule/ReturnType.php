@@ -25,6 +25,7 @@ class ReturnType implements Rule {
     }
 
     protected function verifyReturn($function, array $components) {
+        debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         if (!$function->stmts) {
             // interface
             return [];
@@ -51,6 +52,8 @@ class ReturnType implements Rule {
                 } else {
                     $errors[] = ["Explicit null return found for non-null type $type", $return];
                 }
+            } elseif (!$return->expr->type) {
+                $errors[] = ["Could not resolve type for return", $return];
             } else {
                 if (!$components['typeResolver']->resolves($return->expr->type, $type)) {
                     $errors[] = ["Type mismatch on return value, found {$return->expr->type} expecting {$type}", $return];

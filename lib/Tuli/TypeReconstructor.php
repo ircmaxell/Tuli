@@ -71,7 +71,10 @@ class TypeReconstructor {
 			return $types[0];
 		}
 		$same = null;
-		foreach ($types as $type) {
+		foreach ($types as $key => $type) {
+			if (is_string($type)) {
+				$type = $types[$key] = Type::fromDecl($type);
+			}
 			if (is_null($same)) {
 				$same = $type;
 			} elseif ($same && !$same->equals($type)) {
@@ -92,6 +95,10 @@ class TypeReconstructor {
 			$userTypes = array_merge($userTypes, $type->userTypes);
 			$subTypes = array_merge($subTypes, $type->subTypes);
 		}
+		if ($value === 0) {
+			var_dump($types);
+		}
+		assert($value !== 0);
 		return new Type($value, $userTypes, $subTypes);
 	}
 
@@ -111,24 +118,6 @@ class TypeReconstructor {
 			return false;
 		}
 		return $this->computeMergedType($types);
-		$same = null;
-		foreach ($types as $type) {
-			if (is_null($same)) {
-				$same = $type;
-			} elseif (!$same->equals($type)) {
-				if ($this->components['typeResolver']->resolves($same, $type)) {
-					// same is the supertype, switch to it
-					$same = $type;
-					continue;
-				} elseif ($this->components['typeResolver']->resolves($type, $same)) {
-					// type is a super type of same
-					continue;
-				}
-				// Type changes with different call paths!
-				return false;
-			}
-		}
-		return $same;
 	}
 
 	protected function resolveVarOp(Operand $var, Op $op, \SplObjectStorage $resolved) {
@@ -216,13 +205,13 @@ class TypeReconstructor {
 						case [Type::TYPE_NUMERIC, Type::TYPE_NUMERIC]:
 							return [new Type(Type::TYPE_NUMERIC)];
 						case [Type::TYPE_ARRAY, Type::TYPE_ARRAY]:
-							if ($resolved[$op->left]->subType->equals($resolved[$op->right]->subType)) {
-								return [new Type(Type::TYPE_ARRAY, $resolved[$op->left]->subType)];
+							$sub = $this->computeMergedType(array_merge($resolved[$op->left]->subTypes), $resolved[$op->right]->subTypes);
+							if ($sub) {
+								return [new Type(Type::TYPE_ARRAY, [$sub])];
 							}
-							// TODO: handle the int->float widening case
-							return [new Type(Type::TYPE_ARRAY, new Type(Type::TYPE_MIXED))];
+							return [new Type(Type::TYPE_ARRAY)];
 						default:
-							throw new \RuntimeException("Unknown Type Pair: " . $resolved[$op->left] . ":" . $resolved[$op->right]);
+							return [new Type(Type::TYPE_MIXED)];
 					}
 				}
 
@@ -253,7 +242,7 @@ class TypeReconstructor {
 				}
 				break;
 			case 'Expr_Closure':
-				return [new Type(Type::TYPE_USER, null, "Closure")];
+				return [new Type(Type::TYPE_USER, [], ["Closure"])];
 			case 'Expr_FuncCall':
 				if ($op->name instanceof Operand\Literal) {
 					$name = strtolower($op->name->value);
@@ -275,7 +264,7 @@ class TypeReconstructor {
 				break;
 			case 'Expr_List':
 				if ($op->result === $var) {
-					return [new Type(Type::TYPE_ARRAY, new Type(Type::TYPE_MIXED))];
+					return [new Type(Type::TYPE_ARRAY)];
 				}
 				// TODO: infer this
 				return [new Type(Type::TYPE_MIXED)];
@@ -385,6 +374,9 @@ class TypeReconstructor {
 						// entire phi isn't resolved yet, can't process
 						continue 2;
 					}
+				}
+				if (empty($types)) {
+					return false;
 				}
 				$type = $this->computeMergedType($types);
 				if ($type) {

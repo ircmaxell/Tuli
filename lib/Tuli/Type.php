@@ -172,6 +172,10 @@ class Type {
             $type = Type::fromDecl(substr($decl, 0, -2));
             return new Type(Type::TYPE_ARRAY, [$type]);
         }
+        if (substr($decl, -2) === '()') {
+            // because some people use array() as a type declaration. sigh
+            return Type::fromDecl(substr($decl, 0, -2));
+        }
         $regex = '(^([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\\\\)*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$)';
         if (!preg_match($regex, $decl)) {
             throw new \RuntimeException("Unknown type declaration found: $decl");
@@ -197,7 +201,7 @@ class Type {
     		return false;
     	}
     	if ($type->type === Type::TYPE_ARRAY) {
-    		return $this->subType->equals($type->subType);
+            return $this->subTypes === $type->subTypes;
     	}
     	if ($type->type === Type::TYPE_USER) {
             $left = array_map('strtolower', $type->userTypes);

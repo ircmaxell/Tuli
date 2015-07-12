@@ -11,7 +11,7 @@ class TypeResolver {
     }
 
     public function allowsNull(Type $type) {
-        if (($type->type & Type::NULL) !== 0) {
+        if (($type->type & Type::TYPE_NULL) !== 0) {
             return true;
         }
         return false;
