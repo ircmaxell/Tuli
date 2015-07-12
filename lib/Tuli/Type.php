@@ -145,16 +145,4 @@ class Type {
     	return true;
     }
 
-    public function resolves($type) {
-    	if (is_string($type)) {
-    		$type = Type::fromDecl($type);
-    	}
-    	if ($this->equals($type)) {
-    		return true;
-    	}
-    	if ($this->type === Type::TYPE_LONG && $type->type === Type::TYPE_DOUBLE) {
-    		return true;
-    	}
-    	return false;
-    }
 }

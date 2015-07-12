@@ -19,6 +19,8 @@ use PHPCfg\Op;
 
 class AnalyzeCommand extends Command {
 
+	protected $rules = [];
+
 	protected function configure() {
 		$this->setName('analyze')
 			->setDescription('Analyze the provided files')
@@ -27,25 +29,34 @@ class AnalyzeCommand extends Command {
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output) {
+		$this->loadRules($input);
 		$parser = new CFGParser(new Parser(new Lexer));
 		$graphs = $this->getGraphsFromFiles($input->getArgument('files'), $input->getOption("exclude"), $parser);
 		$components = $this->preProcess($graphs, $output);
+		$components = $this->computeTypeMatrix($components);
+		$components['typeResolver'] = new TypeResolver($components);
 
 		echo "Determining Variable Types\n";
 		$typeReconstructor = new TypeReconstructor;
 		$typeReconstructor->resolve($components);
 
 		echo "Detecting Type Conversion Issues\n";
+		$errors = [];
+		foreach ($this->rules as $rule) {
+			echo "Executing rule: " . $rule->getName() . "\n";
+			$errors = array_merge($errors, $rule->execute($components));
+		}
+		if ($errors) {
+			echo "\nErrors found:\n";
+			foreach ($errors as $error) {
+				$this->emitError($error[0], $error[1]);
+			}
+		}
+	}
 
-		echo "Detecting Function Argument Errors\n";
-		$this->detectFunctionCallClashes($components);
-
-		echo "Detecting Function Return Errors\n";
-		$this->detectFunctionReturnClashes($components);
-
-		echo "Detecting Method Argument Errors\n";
-		$this->detectMethodCallClashes($components);
-		echo "Done\n";
+	protected function loadRules(InputInterface $input) {
+		$this->rules[] = new Rule\ArgumentType;
+		$this->rules[] = new Rule\ReturnType;
 	}
 
 	protected function getGraphsFromFiles(array $files, array $exclude, CFGParser $parser) {
@@ -112,83 +123,68 @@ class AnalyzeCommand extends Command {
 			"interfaces" => $declarations->getInterfaces(),
 			"variables" => $variables->getVariables(),
 			"callResolver" => $calls,
-			"typeMatrix" => $this->computeTypeMatrix($declarations),
+			"methodCalls" => $this->findMethodCalls($blocks),
 		];
 	}
 
-	protected function computeTypeMatrix($declarations) {
-		// TODO: This is dirty and broken, fix it
-		$classes = $declarations->getClasses();
-		$interfaces = $declarations->getInterfaces();
+	protected function findMethodCalls(array $blocks) {
+		$methodCalls = [];
+        foreach ($blocks as $block) {
+            $methodCalls = $this->findTypedBlock("Expr_MethodCall", $block, $methodCalls);
+        }
+        return $methodCalls;
+	}
 
-		$parents = [];
+	protected function computeTypeMatrix($components) {
+		// TODO: This is dirty, and needs cleaning
+		// A extends B
+		$map = []; // a => [a, b], b => [b]
+		$interfaceMap = [];
+		$classMap = [];
 		$toProcess = [];
-		$parents = [];
-		$matrix = [];
-		foreach ($classes as $class) {
-			// Trivial case
-			$name = strtolower($class->name->value);
-			$matrix[$name] = [$name => $class];
-			if (isset($toProcess[$name])) {
-				foreach ($toProcess[$name] as $v) {
-					$matrix[$name][strtolower($v->name->value)] = $v;
+		foreach ($components['interfaces'] as $interface) {
+			$name = strtolower($interface->name->value);
+			$map[$name] = [];
+			$interfaceMap[$name] = [];
+			if ($interface->extends) {
+				foreach ($interface->extends as $extends) {
+					$interfaceMap[$name][] = strtolower($extends->value);
 				}
-			} else {
-				$toProcess[$name] = [];
+			}
+		}
+		foreach ($components['classes'] as $class) {
+			$name = strtolower($class->name->value);
+			$map[$name] = [$name => $class];
+			$classMap[$name] = [$name];
+			foreach ($class->implements as $interface) {
+				$iname = strtolower($interface->value);
+				$classMap[$name][] = $iname;
+				$map[$iname][$name] = $class;
+				if (isset($interfaceMap[$iname])) {
+					foreach ($interfaceMap[$iname] as $sub) {
+						$classMap[$name][] = $sub;
+						$map[$sub][$name] = $class;
+					}
+				}
 			}
 			if ($class->extends) {
-				$extends = strtolower($class->extends->value);
-				$parents[$name][] = $extends;
-				if (isset($matrix[$extends])) {
-					$matrix[$extends][strtolower($class->name->value)] = $class;
-					foreach ($toProcess[$name] as $v) {
-						$matrix[$extends][strtolower($v->name->value)] = $v;
-					}
-					foreach ($parents[$extends] as $parent) {
-						$matrix[$parent][strtolower($class->name->value)] = $class;
-						foreach ($toProcess[$name] as $v) {
-							$matrix[$parent][strtolower($v->name->value)] = $v;
-						}
-					}
-				} else {
-					$toProcess[$extends][$name] = $class;
-				}
-			}
-			foreach ($class->implements as $implement) {
-				$interface = strtolower($implement->value);
-				$parents[$name][] = $interface;
-				if (isset($matrix[$interface])) {
-					$matrix[$interface][strtolower($class->name->value)] = $class;
-					foreach ($toProcess[$name] as $v) {
-						$matrix[$interface][strtolower($v->name->value)] = $v;
-					}
-					foreach ($parents[$interface] as $parent) {
-						$matrix[$parent][strtolower($class->name->value)] = $class;
-						foreach ($toProcess[$name] as $v) {
-							$matrix[$parent][strtolower($v->name->value)] = $v;
-						}
-					}
-				} else {
-					$toProcess[$interface][$name] = $class;
-				}
+				$toProcess[] = [$name, strtolower($class->extends->value), $class];
 			}
 		}
-
-		foreach ($interfaces as $interface) {
-			// Trivial case
-			$name = strtolower($interface->name->value);
-			if (isset($toProcess[$name])) {
-				foreach ($toProcess[$name] as $v) {
-					$matrix[$name][strtolower($v->name->value)] = $v;
+		foreach ($toProcess as $ext) {
+			$name = $ext[0];
+			$extends = $ext[1];
+			$class = $ext[2];
+			if (isset($classMap[$extends])) {
+				foreach ($classMap[$extends] as $mapped) {
+					$map[$mapped][$name] = $class;
 				}
 			} else {
-				$toProcess[$name] = [];
-			}
-			if ($interface->extends) {
-				// TODO
+				echo "Could not find parent $extends\n";
 			}
 		}
-		return $matrix;
+		$components['resolves'] = $map;
+		return $components; 
 	}
 
 	protected function buildFunctionLookup(array $functions) {
@@ -202,189 +198,6 @@ class AnalyzeCommand extends Command {
 			$lookup[$name][] = $function;
 		}
 		return $lookup;
-	}
-
-	protected function detectFunctionCallClashes(array $components) {
-		foreach ($components['functionLookup'] as $name => $functions) {
-			$calls = $components['callResolver']->getCallsForFunction($name);
-			foreach ($functions as $func) {
-				foreach ($func->params as $idx => $param) {
-					foreach ($calls as $call) {
-						if (!isset($call[0]->args[$idx]) && !$param->defaultVar) {
-							$this->emitError(
-								"Missing required argument $idx for function call $name",
-								$call[0]
-							);
-						} else {
-							if ($param->type && $this->typeResolves($call->args[$idx]->type, Type::fromDecl($param->type->value))) {
-								$this->emitError(
-									"Type mismatch on $name() argument $idx, found {$call[0]->args[$idx]->type} expecting {$param->type->value}",
-									$call[0]
-								);
-							}
-						}
-					}
-				}
-			}
-
-		}
-	}
-
-	protected function detectFunctionReturnClashes(array $components) {
-		foreach ($components['functionLookup'] as $name => $functions) {
-			foreach ($functions as $func) {
-				if (!$func->returnType) {
-					continue;
-				}
-				$type = Type::fromDecl($func->returnType->value);
-				$returns = array_unique($this->findReturnBlocks($func->stmts), SORT_REGULAR);
-				foreach ($returns as $return) {
-					if (!$return || !$return->expr) {
-						// Default return, no
-						if ($this->allowsNull($type)) {
-							continue;
-						}
-						if (!$return) {
-							$this->emitError(
-								"Default return found for non-null type $type",
-								$func
-							);
-						} else {
-							$this->emitError(
-								"Explicit null return found for non-null type $type",
-								$return
-							);
-						}
-					} else {
-						if (!$this->typeResolves($type, $return->expr->type)) {
-							$this->emitError(
-								"Type mismatch on $name() return value, found {$return->expr->type} expecting {$type}",
-								$return
-							);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	protected function detectMethodCallClashes(array $components) {
-		$methodCalls = [];
-		foreach ($components['cfg'] as $block) {
-			$methodCalls = $this->findTypedBlock("Expr_MethodCall", $block, $methodCalls);
-		}
-		foreach ($methodCalls as $call) {
-			assert(isset($call->var->type));
-			if (!$call->name instanceof Operand\Literal) {
-				// variable method call, can't analyze (yet)
-				continue;
-			}
-			if ($call->var->type->type !== Type::TYPE_USER) {
-				continue;
-			}
-			$name = strtolower($call->var->type->userType);
-			// try looking it up
-			if (!isset($components['typeMatrix'][$name])) {
-				echo "Could not find class $name\n";
-				continue;
-			}
-			foreach ($components['typeMatrix'][$name] as $class) {
-				$cn = $class->name->value;
-				$method = $this->findMethod($class, strtolower($call->name->value));
-				if (!$method) {
-					die("No method found");
-				}
-				foreach ($method->params as $idx => $param) {
-					if (!isset($call->args[$idx]) && !$param->defaultVar) {
-						$this->emitError(
-							"Missing required argument $idx for method call $cn->{$call->name->value}",
-							$call
-						);
-					} else {
-						if ($param->type && $this->typeResolves($call->args[$idx]->type, Type::fromDecl($param->type->value))) {
-							$this->emitError(
-								"Type mismatch on $cn->{$call->name->value}() argument $idx, found {$call->args[$idx]->type} expecting {$param->type->value}",
-								$call
-							);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	protected function typeResolves(Type $arg, Type $value) {
-		if ($arg->resolves($value)) {
-			return true;
-		}
-		if ($arg->type === Type::TYPE_USER && $value->type === Type::TYPE_USER) {
-			if (isset($this->components['typeMatrix'][strtolower($arg->userType)][strtolower($value->userType)])) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	protected function findMethod($class, $name) {
-		foreach ($class->stmts->children as $stmt) {
-			if ($stmt instanceof Op\Stmt\ClassMethod) {
-				if (strtolower($stmt->name->value) === $name) {
-					return $stmt;
-				}
-			}
-		}
-		if ($name !== '__call') {
-			return $this->findMethod($class, '__call');
-		}
-		return null;
-	}
-
-	protected function allowsNull(Type $type) {
-		if ($type->type === Type::TYPE_MIXED) {
-			return true;
-		}
-		// TODO allow more
-		return false;
-	}
-
-	protected function findReturnBlocks(Block $block, $result = []) {
-		$toProcess = new \SplObjectStorage;
-		$processed = new \SplObjectStorage;
-		$toProcess->attach($block);
-		foreach ($toProcess as $block) {
-			$toProcess->detach($block);
-			$processed->attach($block);
-			foreach ($block->children as $op) {
-				if ($op instanceof Op\Terminal\Return_) {
-					$result[] = $op;
-					continue 2;
-					// Prevent dead code from executing
-				} elseif ($op instanceof Op\Stmt\Jump) {
-					if (!$processed->contains($op->target)) {
-						$toProcess->attach($op->target);
-					}
-					continue 2;
-				} elseif ($op instanceof Op\Stmt\JumpIf) {
-					if (!$processed->contains($op->if)) {
-						$toProcess->attach($op->if);
-					}
-					if (!$processed->contains($op->else)) {
-						$toProcess->attach($op->else);
-					}
-					continue 2;
-				} elseif ($op instanceof Op\Stmt\Switch_) {
-					foreach ($op->targets as $target) {
-						if (!$processed->contains($target)) {
-							$toProcess->attach($target);
-						}
-					}
-					continue 2;
-				}
-			}
-			// If we reach here, we have an empty return default block, add it to the result
-			$result[] = null;
-		}
-		return $result;
 	}
 
 	protected function findTypedBlock($type, Block $block, $result = []) {

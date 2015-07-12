@@ -1,6 +1,9 @@
 #!/usr/bin/env php
 <?php
 
+error_reporting(~0);
+gc_disable();
+
 $found = false;
 for ($i = 2; $i >= 0; $i--) {
 	$file = __DIR__ . str_repeat('/..', $i) . "/vendor/autoload.php";

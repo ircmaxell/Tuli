@@ -102,10 +102,12 @@ class TypeReconstructor {
 			if (is_null($same)) {
 				$same = $type;
 			} elseif (!$same->equals($type)) {
-				if ($same->resolves($type)) {
+				if ($this->components['typeResolver']->resolves($same, $type)) {
+					// same is the supertype, switch to it
 					$same = $type;
 					continue;
-				} elseif ($type->resolves($same)) {
+				} elseif ($this->components['typeResolver']->resolves($type, $same)) {
+					// type is a super type of same
 					continue;
 				}
 				// Type changes with different call paths!
