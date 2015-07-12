@@ -25,7 +25,6 @@ class ReturnType implements Rule {
     }
 
     protected function verifyReturn($function, array $components) {
-        debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         if (!$function->stmts) {
             // interface
             return [];
@@ -40,7 +39,7 @@ class ReturnType implements Rule {
                 return $errors;
             }
         }
-        $returns = array_unique($this->findReturnBlocks($function->stmts), SORT_REGULAR);
+        $returns = $this->findReturnBlocks($function->stmts); 
         foreach ($returns as $return) {
             if (!$return || !$return->expr) {
                 // Default return, no
@@ -66,6 +65,8 @@ class ReturnType implements Rule {
     protected function findReturnBlocks(Block $block, $result = []) {
         $toProcess = new \SplObjectStorage;
         $processed = new \SplObjectStorage;
+        $results = new \SplObjectStorage;
+        $addNull = false;
         $toProcess->attach($block);
         while ($toProcess->count() > 0) {
             foreach ($toProcess as $block) {
@@ -73,7 +74,7 @@ class ReturnType implements Rule {
                 $processed->attach($block);
                 foreach ($block->children as $op) {
                     if ($op instanceof Op\Terminal\Return_) {
-                        $result[] = $op;
+                        $results->attach($op);
                         continue 2;
                         // Prevent dead code from executing
                     } elseif ($op instanceof Op\Stmt\Jump) {
@@ -91,17 +92,27 @@ class ReturnType implements Rule {
                         continue 2;
                     } elseif ($op instanceof Op\Stmt\Switch_) {
                         foreach ($op->targets as $target) {
-                            if (!$processed->contains($target)) {
-                                $toProcess->attach($target);
+                            if (!is_array($target)) {
+                                // TODO FIX THIS
+                                $target = [$target];
+                            }
+                            foreach ($target as $t) {
+                                if (!$processed->contains($t)) {
+                                    $toProcess->attach($t);
+                                }
                             }
                         }
                         continue 2;
                     }
                 }
                 // If we reach here, we have an empty return default block, add it to the result
-                $result[] = null;
+                $addNull = true;
             }
         }
-        return $result;
+        $results = iterator_to_array($results);
+        if ($addNull) {
+            $results[] = null;
+        }
+        return $results;
     }
 }

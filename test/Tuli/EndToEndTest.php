@@ -3,8 +3,7 @@
 namespace Tuli;
 
 
-use PhpParser\Parser;
-use PhpParser\Lexer;
+use PhpParser\ParserFactory;
 use PHPCfg\Parser as CFGParser;
 
 class EndToEndTest extends \PHPUnit_Framework_TestCase {
@@ -31,7 +30,7 @@ class EndToEndTest extends \PHPUnit_Framework_TestCase {
     public function setUp() {
         $this->analyzer = new AnalyzeCommand;
         $this->analyzer->loadRules();
-        $this->parser = new CFGParser(new Parser(new Lexer));
+        $this->parser = new CFGParser((new ParserFactory)->create(ParserFactory::PREFER_PHP7));
     }
 
     /**
