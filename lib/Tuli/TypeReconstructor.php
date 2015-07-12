@@ -77,13 +77,22 @@ class TypeReconstructor {
 			} elseif ($same && !$same->equals($type)) {
 				$same = false;
 			}
+			if ($type->type === Type::TYPE_UNKNOWN) {
+				return false;
+			}
 		}
 		if ($same) {
 			return $same;
 		}
-		// different types
-		// TODO: implement this better to handle numeric
-		return new Type(Type::TYPE_MIXED);
+		$value = 0;
+		$userTypes = [];
+		$subTypes = [];
+		foreach ($types as $type) {
+			$value |= $type->type;
+			$userTypes = array_merge($userTypes, $type->userTypes);
+			$subTypes = array_merge($subTypes, $type->subTypes);
+		}
+		return new Type($value, $userTypes, $subTypes);
 	}
 
 	protected function resolveVar(Operand $var, \SplObjectStorage $resolved) {
@@ -101,6 +110,7 @@ class TypeReconstructor {
 		if (empty($types)) {
 			return false;
 		}
+		return $this->computeMergedType($types);
 		$same = null;
 		foreach ($types as $type) {
 			if (is_null($same)) {
@@ -131,8 +141,8 @@ class TypeReconstructor {
 				if ($resolved->contains($op->var)) {
 					// Todo: determine subtypes better
 					$type = $resolved[$op->var];
-					if ($type->subType) {
-						return [$type->subType];
+					if ($type->subTypes) {
+						return $type->subTypes;
 					}
 					return [new Type(Type::TYPE_MIXED)];
 				}
@@ -292,6 +302,12 @@ class TypeReconstructor {
 			case 'Stmt_Property':
 				// TODO: we may be able to determine these...
 				return [new Type(Type::TYPE_MIXED)];
+			case 'Expr_TypeAssert':
+				return [Type::fromDecl($op->assertedType)];
+			case 'Expr_TypeUnAssert':
+				if ($resolved->contains($op->assert->expr)) {
+					return [$resolved[$op->assert->expr]];
+				}
 			case 'Expr_UnaryMinus':
 			case 'Expr_UnaryPlus':
 				if ($resolved->contains($op->expr)) {
@@ -319,8 +335,8 @@ class TypeReconstructor {
 				return [new Type(Type::TYPE_BOOLEAN)];
 			case 'Iterator_Value':
 				if ($resolved->contains($op->var)) {
-					if ($resolved[$op->var]->subType) {
-						return [Type::fromDecl($resolved[$op->var]->subType)];
+					if ($resolved[$op->var]->subTypes) {
+						return $resolved[$op->var]->subTypes;
 					}
 					return [new Type(Type::TYPE_MIXED)];
 				}
@@ -334,20 +350,23 @@ class TypeReconstructor {
 					if ($resolved[$op->var]->type !== Type::TYPE_USER) {
 						return [new Type(Type::TYPE_MIXED)];
 					}
-					$className = strtolower($resolved[$op->var]->userType);
-					if (!isset($this->components['resolves'][$className])) {
-						return [new Type(Type::TYPE_MIXED)];
-					}
 					$types = [];
-					foreach ($this->components['resolves'][$className] as $class) {
-						$method = $this->findMethod($class, $op->name->value);
-						if (!$method) {
-							continue;
+					foreach ($resolved[$op->var]->userTypes as $ut) {
+						$className = strtolower($ut);
+						if (!isset($this->components['resolves'][$className])) {
+							return [new Type(Type::TYPE_MIXED)];
 						}
-						if (!$method->returnType) {
-							return [Type::extractTypeFromComment("return", $method->getAttribute('doccomment'))];
+						foreach ($this->components['resolves'][$className] as $class) {
+							$method = $this->findMethod($class, $op->name->value);
+							if (!$method) {
+								continue;
+							}
+							if (!$method->returnType) {
+								$types[] = Type::extractTypeFromComment("return", $method->getAttribute('doccomment'));
+							} else {
+								$types[] = Type::fromDecl($method->returnType->value);
+							}
 						}
-						$types[] = Type::fromDecl($method->returnType->value);
 					}
 					return $types;
 				}
@@ -408,7 +427,7 @@ class TypeReconstructor {
 						case 'Expr_InstanceOf':
 							if ($op->class instanceof Operand\Literal) {
 								$assertions[] = [
-									new Type(Type::TYPE_USER, null, strtolower($op->class->value)),
+									new Type(Type::TYPE_USER, [], [$op->class->value]),
 									$op->expr,
 									$op->result,	
 								];

@@ -177,11 +177,13 @@ class AnalyzeCommand extends Command {
 		$toProcess = [];
 		foreach ($components['interfaces'] as $interface) {
 			$name = strtolower($interface->name->value);
-			$map[$name] = [];
+			$map[$name] = [$name => $interface];
 			$interfaceMap[$name] = [];
 			if ($interface->extends) {
 				foreach ($interface->extends as $extends) {
-					$interfaceMap[$name][] = strtolower($extends->value);
+					$sub = strtolower($extends->value);
+					$interfaceMap[$name][] = $sub;
+					$map[$sub][$name] = $interface;
 				}
 			}
 		}

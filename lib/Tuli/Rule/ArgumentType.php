@@ -32,19 +32,21 @@ class ArgumentType implements Rule {
                 // We don't know the type
                 continue;
             }
-            $name = strtolower($call->var->type->userType);
-            if (!isset($components['resolves'][$name])) {
-                // Could not find class
-                continue;
-            }
-            foreach ($components['resolves'][$name] as $cn => $class) {
-                // For every possible class that can resolve the type
-                $method = $this->findMethod($class, $name);
-                if (!$method) {
-                    // Class does not *directly* implement method
+            foreach ($call->var->type->userTypes as $ut) {
+                $name = strtolower($ut);
+                if (!isset($components['resolves'][$name])) {
+                    // Could not find class
                     continue;
                 }
-                $errors = array_merge($errors, $this->verifyCall($method, $call, $components, $cn . "->" . $name));
+                foreach ($components['resolves'][$name] as $cn => $class) {
+                    // For every possible class that can resolve the type
+                    $method = $this->findMethod($class, $name);
+                    if (!$method) {
+                        // Class does not *directly* implement method
+                        continue;
+                    }
+                    $errors = array_merge($errors, $this->verifyCall($method, $call, $components, $cn . "->" . $name));
+                }
             }
         }
         return $errors;

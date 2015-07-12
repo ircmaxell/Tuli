@@ -25,6 +25,10 @@ class ReturnType implements Rule {
     }
 
     protected function verifyReturn($function, array $components) {
+        if (!$function->stmts) {
+            // interface
+            return [];
+        }
         $errors = [];
         if ($function->returnType) {
             $type = Type::fromDecl($function->returnType->value);
