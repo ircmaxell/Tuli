@@ -212,7 +212,7 @@ class TypeReconstructor {
 							// TODO: handle the int->float widening case
 							return [new Type(Type::TYPE_ARRAY, new Type(Type::TYPE_MIXED))];
 						default:
-							throw new \RuntimeException("Unknown Type Pair: " . $resolved[$op->left]->type . ":" . $resolved[$op->right]->type);
+							throw new \RuntimeException("Unknown Type Pair: " . $resolved[$op->left] . ":" . $resolved[$op->right]);
 					}
 				}
 

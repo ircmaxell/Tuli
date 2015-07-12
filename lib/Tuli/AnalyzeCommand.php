@@ -31,8 +31,14 @@ class AnalyzeCommand extends Command {
 		'yml',
 		'dist',
 		'test',
+		'tests',
+		'Tests',
 		'parser',
 		'build',
+		'sh',
+		'.gitignore',
+		'LICENSE',
+		
 	];
 
 	protected $rules = [];

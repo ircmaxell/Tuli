@@ -125,10 +125,14 @@ class Type {
             $decl = substr($decl, 1);
         }
     	switch (strtolower($decl)) {
+            case 'boolean':
     		case 'bool':
     			return new Type(Type::TYPE_BOOLEAN);
+            case 'integer':
     		case 'int':
     			return new Type(Type::TYPE_LONG);
+            case 'double':
+            case 'real':
     		case 'float':
     			return new Type(Type::TYPE_DOUBLE);
     		case 'string':
