@@ -39,7 +39,7 @@ class ReturnType implements Rule {
                 return $errors;
             }
         }
-        $returns = $this->findReturnBlocks($function->stmts); 
+        $returns = $this->findReturnBlocks($function->stmts);
         foreach ($returns as $return) {
             if (!$return || !$return->expr) {
                 // Default return, no

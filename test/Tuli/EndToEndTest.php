@@ -2,7 +2,6 @@
 
 namespace Tuli;
 
-
 use PhpParser\ParserFactory;
 use PHPCfg\Parser as CFGParser;
 

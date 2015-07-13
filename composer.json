@@ -10,11 +10,12 @@
     ],
     "require": {
         "php": ">=5.5",
-		"ircmaxell/php-cfg": "dev-master",
+	    "ircmaxell/php-cfg": "dev-master",
         "cilex/cilex": "1.*"
     },
     "require-dev": {
-        "phpunit/phpunit": "^4.7"
+        "phpunit/phpunit": "^4.7",
+        "fabpot/php-cs-fixer": "1.*"
     },
     "minimum-stability": "dev",
     "autoload": {

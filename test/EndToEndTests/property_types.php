@@ -24,9 +24,9 @@ EOF;
 return [
     $code,
     [
-    	[
-    		"line" => 16,
-    		"message" => "Type mismatch on return value, found array expecting int",
-    	]
+        [
+            "line" => 16,
+            "message" => "Type mismatch on return value, found array expecting int",
+        ]
     ]
 ];

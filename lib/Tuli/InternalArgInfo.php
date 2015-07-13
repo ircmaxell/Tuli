@@ -6627,7 +6627,7 @@ class InternalArgInfo {
         'SimpleXMLElement::getNamespaces' => ['string', 'recursve='=>'bool'],
         'SimpleXMLElement::registerXPathNamespace' => ['bool', 'prefix'=>'string', 'ns'=>'string'],
         'SimpleXMLElement::__toString' => ['object'],
-        'SimpleXMLElement::xpath' => ['array', 'path'=>'string'], 
+        'SimpleXMLElement::xpath' => ['array', 'path'=>'string'],
         'simplexml_import_dom' => ['simplemxml_element', 'node'=>'domnode', 'class_name='=>'string'],
         'SimpleXMLIterator::current' => ['SimpleXMLIterator'],
         'SimpleXMLIterator::getChildren' => ['SimpleXMLIterator'],

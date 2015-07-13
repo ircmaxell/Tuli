@@ -25,9 +25,9 @@ EOF;
 return [
     $code,
     [
-    	[
-    		"line" => 18,
-    		"message" => "Type mismatch on C::__construct() argument 0, found int expecting string",
-    	]
+        [
+            "line" => 18,
+            "message" => "Type mismatch on C::__construct() argument 0, found int expecting string",
+        ]
     ]
 ];
