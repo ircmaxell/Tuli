@@ -22,20 +22,22 @@ Then simply `bin/tuli` to execute.
 
 code.php:
 
-    <?php
+```php
+<?php
 
-	$a = 1.0;
-	$b = 2;
+$a = 1.0;
+$b = 2;
 
-	$c = foo($a, $b);
+$c = foo($a, $b);
 
-	$d = foo($b, $c);
+$d = foo($b, $c);
 
-	function foo(int $a, int $b): int {
-		if ($a > $b) {
-			return $a + $b + 0.5;
-		}
-	}
+function foo(int $a, int $b): int {
+    if ($a > $b) {
+        return $a + $b + 0.5;
+    }
+}
+```
 
 Then, in shell:
 
@@ -86,29 +88,31 @@ Todo:
 
 ## Another example:
 
-    <?php
+```php
+<?php
 
-    class A {
-        public function foo(int $a) : int {
-            return $a;
-        }
+class A {
+    public function foo(int $a) : int {
+        return $a;
     }
+}
 
-    class B extends A {
-        public function foo(float $a) : float {
-            return $a;
-        }
+class B extends A {
+    public function foo(float $a) : float {
+        return $a;
     }
+}
 
-    class C extends B {
-        public function foo(int $a) : int {
-            return $a;
-        }
+class C extends B {
+    public function foo(int $a) : int {
+        return $a;
     }
+}
 
-    function foo(A $a) : int {
-        return $a->foo(1.0);
-    }
+function foo(A $a) : int {
+    return $a->foo(1.0);
+}
+```
 
 Running:
 
