@@ -30,9 +30,6 @@ class TypeReconstructor {
 			return;
 		}
 
-		echo "Locating Type Assertions\n";
-		$assertions = $this->findTypeAssertions($components['cfg']);
-
 		$round = 1;
 		do {
 			echo "Round " . $round++ . " (" . count($unresolved) . " unresolved variables out of " . count($components['variables']) . ")\n";
@@ -130,6 +127,9 @@ class TypeReconstructor {
 					$type = $resolved[$op->var];
 					if ($type->subTypes) {
 						return $type->subTypes;
+					}
+					if ($type->type === Type::TYPE_STRING) {
+						return [$type];
 					}
 					return [new Type(Type::TYPE_MIXED)];
 				}
@@ -255,6 +255,14 @@ class TypeReconstructor {
 							}
 						}
 						return $result;
+					} else {
+						if (isset($this->components['internalTypeInfo']->functions[$name])) {
+							$type = $this->components['internalTypeInfo']->functions[$name];
+							if (empty($type['return'])) {
+								return [new Type(Type::TYPE_MIXED)];
+							}
+							return [Type::fromDecl($type['return'])];
+						}
 					}
 				}
 				// we can't resolve the function
@@ -446,76 +454,6 @@ class TypeReconstructor {
 			return $this->findMethod($class, '__call');
 		}
 		return null;
-	}
-
-	protected function findTypeAssertions(array $blocks) {
-		$toProcess = new \SplObjectStorage;
-		$processed = new \SplObjectStorage;
-		foreach ($blocks as $block) {
-			$toProcess->attach($block);
-		}
-		$assertions = [];
-		while ($toProcess->count()) {
-			foreach ($toProcess as $block) {
-				$toProcess->detach($block);
-				$processed->attach($block);
-				foreach ($block->children as $op) {
-					switch ($op->getType()) {
-						case 'Expr_InstanceOf':
-							if ($op->class instanceof Operand\Literal) {
-								$assertions[] = [
-									new Type(Type::TYPE_USER, [], [$op->class->value]),
-									$op->expr,
-									$op->result,	
-								];
-							}
-							break;
-						case 'Expr_FuncCall':
-							if ($op->name instanceof Operand\Literal) {
-								$assertionFunctions = [
-									'is_array' 	  => Type::TYPE_ARRAY,
-									'is_bool' 	  => Type::TYPE_BOOLEAN,
-									'is_callable' => Type::TYPE_CALLABLE,
-									'is_double'	  => Type::TYPE_DOUBLE,
-									'is_float'	  => Type::TYPE_DOUBLE,
-									'is_int'	  => Type::TYPE_LONG,
-									'is_integer'  => Type::TYPE_LONG,
-									'is_long'	  => Type::TYPE_LONG,
-									'is_null'	  => Type::TYPE_NULL,
-									'is_numeric'  => Type::TYPE_NUMERIC,
-									'is_object'   => Type::TYPE_OBJECT,
-									'is_real'	  => Type::TYPE_DOUBLE,
-									'is_string'   => Type::TYPE_STRING,
-								];
-								$name = strtolower($op->name->value);
-								if (isset($assertionFunctions[$name])) {
-									$assertions[] = [
-										new Type($assertionFunctions[$name]),
-										$op->args[0],
-										$op->result,
-									];
-								}
-							}
-					}
-					foreach ($op->getSubBlocks() as $name) {
-						$sub = $op->$name;
-						if (is_null($sub)) {
-							continue;
-						}
-						if (!is_array($sub)) {
-							$sub = [$sub];
-						}
-						foreach ($sub as $subblock) {
-							if (!$processed->contains($subblock)) {
-								$toProcess->attach($subblock);
-							}
-						}
-					}
-				}
-			}
-		}
-		//var_dump($assertions);
-		return $assertions;
 	}
 
 	protected function resolveClassConstant($class, $op, $resolved) {

@@ -23,6 +23,12 @@ class ArgumentType implements Rule {
                 }
             }
         }
+        foreach ($components['internalTypeInfo']->functions as $name => $arginfo) {
+            $calls = $components['callResolver']->getCallsForFunction($name);
+            foreach ($calls as $call) {
+                $errors = array_merge($errors, $this->verifyInternalCall($arginfo, $call[0], $components, $name));
+            }
+        }
         foreach ($components['methodCalls'] as $call) {
             if (!$call->name instanceof Operand\Literal) {
                 // Variable method call
@@ -84,6 +90,28 @@ class ArgumentType implements Rule {
             }
             if (!$components['typeResolver']->resolves($call->args[$idx]->type, $type)) {
                 $errors[] = ["Type mismatch on $name() argument $idx, found {$call->args[$idx]->type} expecting {$type}", $call];
+            }
+        }
+        return $errors;
+    }
+
+    protected function verifyInternalCall($func, $call, $components, $name) {
+        $errors = [];
+        foreach ($func['params'] as $idx => $param) {
+            if (!isset($call->args[$idx])) {
+                if (substr($param['name'], -1) !== '=') {
+                    $errors[] = ["Missing required argument $idx for call $name()", $call];
+                }
+                continue;
+            }
+            if ($param['type']) {
+                $type = Type::fromDecl($param['type']);
+                if (is_string($call->args[$idx]->type)) {
+                    $call->args[$idx]->type = Type::fromDecl($call->args[$idx]->type);
+                }
+                if (!$components['typeResolver']->resolves($call->args[$idx]->type, $type)) {
+                    $errors[] = ["Type mismatch on $name() argument $idx, found {$call->args[$idx]->type} expecting {$type}", $call];
+                }
             }
         }
         return $errors;

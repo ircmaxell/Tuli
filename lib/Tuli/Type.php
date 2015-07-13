@@ -133,6 +133,8 @@ class Type {
     		return $decl;
     	} elseif (!is_string($decl)) {
             throw new \LogicException("Should never happen");
+        } elseif (empty($decl)) {
+            throw new \RuntimeException("Empty declaration found");
         }
         if ($decl[0] === '\\') {
             $decl = substr($decl, 1);

@@ -37,6 +37,7 @@ class AnalyzeCommand extends Command {
 		'sh',
 		'.gitignore',
 		'LICENSE',
+		'template',
 
 	];
 
@@ -157,6 +158,7 @@ class AnalyzeCommand extends Command {
 			"variables" => $variables->getVariables(),
 			"callResolver" => $calls,
 			"methodCalls" => $this->findMethodCalls($blocks),
+			"internalTypeInfo" => new InternalArgInfo,	
 		];
 	}
 
@@ -225,7 +227,7 @@ class AnalyzeCommand extends Command {
 				if (!isset($components['resolvedBy'][$name])) {
 					$components['resolvedBy'][$name] = [];
 				}
-				//allows iterating and looking up
+				//allows iterating and looking udm_cat_path(agent, category)
 				$components['resolvedBy'][$name][$child] = $child;
 			}
 		}

@@ -52,6 +52,7 @@ class ReturnType implements Rule {
                     $errors[] = ["Explicit null return found for non-null type $type", $return];
                 }
             } elseif (!$return->expr->type) {
+                var_dump($return->expr);
                 $errors[] = ["Could not resolve type for return", $return];
             } else {
                 if (!$components['typeResolver']->resolves($return->expr->type, $type)) {

@@ -15,6 +15,13 @@ function foo(A $a) : int {
     }
     return $a->bar();
 }
+
+function bar($abc) : int {
+    if (is_int($abc)) {
+        return $abc;
+    }
+    return 10;
+}
 ?>
 EOF;
 
