@@ -93,6 +93,7 @@ class AnalyzeCommand extends Command {
 	public function loadRules() {
 		$this->rules[] = new Rule\ArgumentType;
 		$this->rules[] = new Rule\ReturnType;
+		$this->rules[] = new Rule\ConstructorType;
 	}
 
 	protected function getGraphsFromFiles(array $files, array $exclude, CFGParser $parser) {
@@ -159,8 +160,17 @@ class AnalyzeCommand extends Command {
 			"variables" => $variables->getVariables(),
 			"callResolver" => $calls,
 			"methodCalls" => $this->findMethodCalls($blocks),
-			"internalTypeInfo" => new InternalArgInfo,	
+			"newCalls" => $this->findNewCalls($blocks),
+			"internalTypeInfo" => new InternalArgInfo,
 		];
+	}
+
+	protected function findNewCalls(array $blocks) {
+		$newCalls = [];
+        foreach ($blocks as $block) {
+            $newCalls = $this->findTypedBlock("Expr_New", $block, $newCalls);
+        }
+        return $newCalls;
 	}
 
 	protected function findMethodCalls(array $blocks) {

@@ -290,6 +290,12 @@ class TypeReconstructor {
 			case 'Expr_New':
 				if ($op->class instanceof Operand\Literal) {
 					return [new Type(Type::TYPE_USER, [], [$op->class->value])];
+				} elseif ($resolved->contains($op->class)) {
+					$type = $resolved[$op->class];
+					if ($type->type === Type::TYPE_USER) {
+						return [new Type(Type::TYPE_USER, $type->userTypes)];
+					}
+					return [new Type(Type::TYPE_OBJECT)];
 				}
 				return [new Type(Type::TYPE_OBJECT)];
 			case 'Expr_Param':

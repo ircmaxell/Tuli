@@ -1,6 +1,6 @@
 {
-    "name": "ircmaxell/php-tuli",
-    "description": "A Control Flow Graph implementation for PHP",
+    "name": "ircmaxell/tuli",
+    "description": "A Static Analyzer for PHP",
     "license": "BSD",
     "authors": [
         {
