@@ -1,3 +1,5 @@
+![Build Status](https://travis-ci.org/ircmaxell/Tuli.svg)
+
 ## A static analysis engine...
 
 Usage:
