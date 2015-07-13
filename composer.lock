@@ -1,7 +1,7 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
     "hash": "798224a57c0305462c7801a93b81565b",
@@ -130,12 +130,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ircmaxell/php-cfg.git",
-                "reference": "dc3db7a794037ea555c0f55ec4d5655472bea724"
+                "reference": "5876837a96258498b1bfaa149d532d1660e46245"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/dc3db7a794037ea555c0f55ec4d5655472bea724",
-                "reference": "dc3db7a794037ea555c0f55ec4d5655472bea724",
+                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/5876837a96258498b1bfaa149d532d1660e46245",
+                "reference": "5876837a96258498b1bfaa149d532d1660e46245",
                 "shasum": ""
             },
             "require": {
@@ -165,7 +165,7 @@
                 }
             ],
             "description": "A Control Flow Graph implementation for PHP",
-            "time": "2015-07-13 00:03:01"
+            "time": "2015-07-13 15:51:27"
         },
         {
             "name": "nikic/php-parser",
@@ -847,12 +847,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "df88fdf48a61af29cc309545f9c8d425c63b8852"
+                "reference": "1ba1290e47c3275be779967de1516e2989b6e130"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/df88fdf48a61af29cc309545f9c8d425c63b8852",
-                "reference": "df88fdf48a61af29cc309545f9c8d425c63b8852",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/1ba1290e47c3275be779967de1516e2989b6e130",
+                "reference": "1ba1290e47c3275be779967de1516e2989b6e130",
                 "shasum": ""
             },
             "require": {
@@ -901,7 +901,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2015-06-21 07:51:27"
+            "time": "2015-07-13 11:25:16"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -1087,12 +1087,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "437254c51c8654ef9056778c4e7bdf24008d2a93"
+                "reference": "e1cc5855b0dde3d6efa2df0350c72b84aa84771d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/437254c51c8654ef9056778c4e7bdf24008d2a93",
-                "reference": "437254c51c8654ef9056778c4e7bdf24008d2a93",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/e1cc5855b0dde3d6efa2df0350c72b84aa84771d",
+                "reference": "e1cc5855b0dde3d6efa2df0350c72b84aa84771d",
                 "shasum": ""
             },
             "require": {
@@ -1151,7 +1151,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2015-07-12 07:03:16"
+            "time": "2015-07-13 11:33:07"
         },
         {
             "name": "phpunit/phpunit-mock-objects",

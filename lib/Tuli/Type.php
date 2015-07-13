@@ -115,6 +115,12 @@ class Type {
 
     public static function extractTypeFromComment($kind, $comment, $name = '') {
         switch ($kind) {
+        	case 'var':
+                if (preg_match('(@var\s+(\S+))', $comment, $match)) {
+                    $return = Type::fromDecl($match[1]);
+                    return $return;
+                }
+                break;
             case 'return':
                 if (preg_match('(@return\s+(\S+))', $comment, $match)) {
                     $return = Type::fromDecl($match[1]);

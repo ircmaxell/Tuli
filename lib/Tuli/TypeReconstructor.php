@@ -13,6 +13,8 @@ class TypeReconstructor {
 
 	public function resolve(array $components) {
 		$this->components = $components;
+		// First resolve properties
+		$this->resolveAllProperties();
 		$resolved = new \SplObjectStorage;
 		$unresolved = new \SplObjectStorage;
 		foreach ($components['variables'] as $op) {
@@ -301,9 +303,52 @@ class TypeReconstructor {
 					return [$type];
 				}
 				return [Type::extractTypeFromComment("param", $op->function->getAttribute('doccomment'), $op->name->value)];
+			case 'Expr_PropertyFetch':
+				if (!$op->name instanceof Operand\Literal) {
+					// variable property fetch
+					return [new Type(Type::TYPE_MIXED)];
+				}
+				$lowerName = strtolower($op->name->value);
+				$objType = false;
+				if ($op->var instanceof Operand\BoundVariable && $op->var->scope === Operand\BoundVariable::SCOPE_OBJECT) {
+					// $this reference
+					assert($op->var->extra instanceof Operand\Literal);
+					$objType = Type::fromDecl($op->var->extra->value);
+				} elseif ($resolved->contains($op->var)) {
+					$objType = $resolved[$op->var];
+				} else {
+					return false;
+				}
+				if ($objType && $objType->type === Type::TYPE_USER) {
+					$types = [];
+					foreach ($objType->userTypes as $ut) {
+						$ut = strtolower($ut);
+						if (!isset($this->components['resolves'][$ut])) {
+							// unknown type
+							return [new Type(Type::TYPE_MIXED)];
+						}
+						foreach ($this->components['resolves'][$ut] as $name => $class) {
+							// Lookup property on class
+							$property = $this->findProperty($class, $lowerName);
+							if ($property) {
+								if ($property->type) {
+									$types[] = $property->type;
+								} else {
+									echo "Untyped\n";
+									// untyped property
+									return [new Type(Type::TYPE_MIXED)];
+								}
+							}
+						}
+					}
+					if ($types) {
+						return $types;
+					}
+				}
+				return [new Type(Type::TYPE_MIXED)];
 			case 'Expr_Yield':
 			case 'Expr_Include':
-			case 'Expr_PropertyFetch':
+			
 			case 'Expr_StaticPropertyFetch':
 			case 'Stmt_Property':
 				// TODO: we may be able to determine these...
@@ -465,6 +510,27 @@ class TypeReconstructor {
 			return $this->findMethod($class, '__call');
 		}
 		return null;
+	}
+
+	protected function findProperty($class, $name) {
+		foreach ($class->stmts->children as $stmt) {
+			if ($stmt instanceof Op\Stmt\Property) {
+				if (strtolower($stmt->name->value) === $name) {
+					return $stmt;
+				}
+			}
+		}
+		return null;
+	}
+
+	protected function resolveAllProperties() {
+		foreach ($this->components['classes'] as $class) {
+			foreach ($class->stmts->children as $stmt) {
+				if ($stmt instanceof Op\Stmt\Property) {
+					$stmt->type = Type::extractTypeFromComment("var", $stmt->getAttribute('doccomment'));
+				}
+			}
+		}
 	}
 
 	protected function resolveClassConstant($class, $op, $resolved) {
