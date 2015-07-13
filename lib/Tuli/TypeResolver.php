@@ -14,6 +14,9 @@ class TypeResolver {
         if (($type->type & Type::TYPE_NULL) !== 0) {
             return true;
         }
+        if (($type->type === Type::TYPE_VOID)) {
+            return true;
+        }
         return false;
     }
 

@@ -38,7 +38,8 @@ class AnalyzeCommand extends Command {
 		'.gitignore',
 		'LICENSE',
 		'template',
-
+		'Template',
+		'xsd',
 	];
 
 	protected $rules = [];

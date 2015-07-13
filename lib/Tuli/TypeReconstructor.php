@@ -242,7 +242,7 @@ class TypeReconstructor {
 					if ($resolved[$op->expr]->type === Type::TYPE_USER) {
 						return [$resolved[$op->expr]];
 					}
-					return [new Type(Type::TYPE_USER, null, 'stdClass')];
+					return [new Type(Type::TYPE_USER, [], ['stdClass'])];
 				}
 				break;
 			case 'Expr_Clone':
