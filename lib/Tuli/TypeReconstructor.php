@@ -401,7 +401,7 @@ class TypeReconstructor {
                     return [new Type(Type::TYPE_MIXED)];
                 }
                 break;
-			case 'Expr_StaticCall':
+            case 'Expr_StaticCall':
                 return $this->resolveMethodCall($op->class, $op->name, $op, $resolved);
             case 'Expr_MethodCall':
                 return $this->resolveMethodCall($op->var, $op->name, $op, $resolved);
@@ -470,8 +470,8 @@ class TypeReconstructor {
                 }
                 $type = $this->computeMergedType($types);
                 if ($type) {
-                	if ($resolveFully) {
-                    	return [$type];
+                    if ($resolveFully) {
+                        return [$type];
                     }
                     // leave on unresolved list to try again next round
                     $resolved[$var] = $type;
@@ -556,16 +556,16 @@ class TypeReconstructor {
         return $types;
     }
 
-	private function resolveMethodCall($class, $name, Op $op, \SplObjectStorage $resolved) {
-		$name = strtolower($name->value);
+    private function resolveMethodCall($class, $name, Op $op, \SplObjectStorage $resolved) {
+        $name = strtolower($name->value);
         if ($resolved->contains($class)) {
-        	$userTypes = [];
-        	if ($resolved[$class]->type === Type::TYPE_STRING) {
-        		$userTypes = [$class->value];
-        	} elseif ($resolved[$class]->type !== Type::TYPE_USER) {
+            $userTypes = [];
+            if ($resolved[$class]->type === Type::TYPE_STRING) {
+                $userTypes = [$class->value];
+            } elseif ($resolved[$class]->type !== Type::TYPE_USER) {
                 return [new Type(Type::TYPE_MIXED)];
             } else {
-            	$userTypes = $resolved[$class]->userTypes;
+                $userTypes = $resolved[$class]->userTypes;
             }
             $types = [];
             foreach ($userTypes as $ut) {
@@ -576,7 +576,7 @@ class TypeReconstructor {
                 foreach ($this->components['resolves'][$className] as $class) {
                     $method = $this->findMethod($class, $name);
                     if (!$method) {
-                    	echo "$className::{$name} not found\n";
+                        echo "$className::{$name} not found\n";
                         continue;
                     }
                     if (!$method->returnType) {
@@ -587,7 +587,7 @@ class TypeReconstructor {
                 }
             }
             if (!empty($types)) {
-            	return $types;
+                return $types;
             }
             return [new Type(Type::TYPE_MIXED)];
         }

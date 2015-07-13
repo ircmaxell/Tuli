@@ -78,6 +78,9 @@ class ReturnType implements Rule {
                         $results->attach($op);
                         continue 2;
                         // Prevent dead code from executing
+                    } elseif ($op instanceof Op\Terminal\Throw_) {
+                        // throws are ok
+                        continue 2;
                     } elseif ($op instanceof Op\Stmt\Jump) {
                         if (!$processed->contains($op->target)) {
                             $toProcess->attach($op->target);
