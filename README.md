@@ -8,13 +8,13 @@ Usage:
 
 Install it as a composer dependency!!!
 
-   $ composer require ircmaxell/tuli dev-master
+`$ composer require ircmaxell/tuli dev-master`
 
 Then simply execute `vendor/bin/tuli` as normal
 
 Or check it out into its own project. Then `composer install` the dependencies:
 
-    $ composer install
+`$ composer install`
 
 Then simply `bin/tuli` to execute.
 
