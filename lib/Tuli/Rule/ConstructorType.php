@@ -28,7 +28,11 @@ class ConstructorType extends ArgumentType {
             foreach ($types as $type) {
                 $name = strtolower($type);
                 if (!isset($components['resolves'][$name])) {
-                    $errors[] = ["Could not find class definition for $type", $new];
+                	if (isset($components['internalTypeInfo']->methods[$name])) {
+                		// TODO
+                	} else {
+                    	$errors[] = ["Could not find class definition for $type", $new];
+                    }
                     continue;
                 }
                 foreach ($components['resolves'][$name] as $sub => $class) {

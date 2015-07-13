@@ -37,7 +37,7 @@ class TypeReconstructor {
         $round = 1;
         do {
             echo "Round " . $round++ . " (" . count($unresolved) . " unresolved variables out of " . count($components['variables']) . ")\n";
-            $start = count($unresolved);
+            $start = count($resolved);
             $i = 0;
             $toRemove = [];
             foreach ($unresolved as $k => $var) {
@@ -58,13 +58,11 @@ class TypeReconstructor {
                 $unresolved->detach($remove);
             }
             echo "\n";
-        } while (count($unresolved) > 0 && $start > count($unresolved));
+        } while (count($unresolved) > 0 && $start < count($resolved));
         foreach ($resolved as $var) {
             $var->type = $resolved[$var];
         }
         foreach ($unresolved as $var) {
-            var_dump($var);
-            die("testing\n");
             $var->type = $unresolved[$var];
         }
         echo count($unresolved) . " Variables Left Unresolved\n";
@@ -403,36 +401,10 @@ class TypeReconstructor {
                     return [new Type(Type::TYPE_MIXED)];
                 }
                 break;
+			case 'Expr_StaticCall':
+                return $this->resolveMethodCall($op->class, $op->name, $op, $resolved);
             case 'Expr_MethodCall':
-                if (!$op->name instanceof Operand\Literal) {
-                    // variable method call
-                    return [new Type(Type::TYPE_MIXED)];
-                }
-                if ($resolved->contains($op->var)) {
-                    if ($resolved[$op->var]->type !== Type::TYPE_USER) {
-                        return [new Type(Type::TYPE_MIXED)];
-                    }
-                    $types = [];
-                    foreach ($resolved[$op->var]->userTypes as $ut) {
-                        $className = strtolower($ut);
-                        if (!isset($this->components['resolves'][$className])) {
-                            return [new Type(Type::TYPE_MIXED)];
-                        }
-                        foreach ($this->components['resolves'][$className] as $class) {
-                            $method = $this->findMethod($class, $op->name->value);
-                            if (!$method) {
-                                continue;
-                            }
-                            if (!$method->returnType) {
-                                $types[] = Type::extractTypeFromComment("return", $method->getAttribute('doccomment'));
-                            } else {
-                                $types[] = Type::fromDecl($method->returnType->value);
-                            }
-                        }
-                    }
-                    return $types;
-                }
-                break;
+                return $this->resolveMethodCall($op->var, $op->name, $op, $resolved);
             case 'Expr_ConstFetch':
                 if ($op->name instanceof Operand\Literal) {
                     $constant = strtolower($op->name->value);
@@ -455,8 +427,6 @@ class TypeReconstructor {
                             }
                     }
                 }
-                return [new Type(Type::TYPE_MIXED)];
-            case 'Expr_StaticCall':
                 return [new Type(Type::TYPE_MIXED)];
             case 'Expr_ClassConstFetch':
                 //TODO
@@ -487,12 +457,12 @@ class TypeReconstructor {
                 return false;
             case 'Phi':
                 $types = [];
-                foreach ($op->vars as $var) {
-                    if ($resolved->contains($var)) {
-                        $types[] = $resolved[$var];
+                $resolveFully = true;
+                foreach ($op->vars as $v) {
+                    if ($resolved->contains($v)) {
+                        $types[] = $resolved[$v];
                     } else {
-                        // entire phi isn't resolved yet, can't process
-                        continue 2;
+                        $resolveFully = false;
                     }
                 }
                 if (empty($types)) {
@@ -500,7 +470,11 @@ class TypeReconstructor {
                 }
                 $type = $this->computeMergedType($types);
                 if ($type) {
-                    return [$type];
+                	if ($resolveFully) {
+                    	return [$type];
+                    }
+                    // leave on unresolved list to try again next round
+                    $resolved[$var] = $type;
                 }
                 return false;
             default:
@@ -580,6 +554,43 @@ class TypeReconstructor {
             return [new Type(Type::TYPE_MIXED)];
         }
         return $types;
+    }
+
+	private function resolveMethodCall($class, $name, Op $op, \SplObjectStorage $resolved) {
+		$name = strtolower($name->value);
+        if ($resolved->contains($class)) {
+        	$userTypes = [];
+        	if ($resolved[$class]->type === Type::TYPE_STRING) {
+        		$userTypes = [$class->value];
+        	} elseif ($resolved[$class]->type !== Type::TYPE_USER) {
+                return [new Type(Type::TYPE_MIXED)];
+            } else {
+            	$userTypes = $resolved[$class]->userTypes;
+            }
+            $types = [];
+            foreach ($userTypes as $ut) {
+                $className = strtolower($ut);
+                if (!isset($this->components['resolves'][$className])) {
+                    return [new Type(Type::TYPE_MIXED)];
+                }
+                foreach ($this->components['resolves'][$className] as $class) {
+                    $method = $this->findMethod($class, $name);
+                    if (!$method) {
+                    	echo "$className::{$name} not found\n";
+                        continue;
+                    }
+                    if (!$method->returnType) {
+                        $types[] = Type::extractTypeFromComment("return", $method->getAttribute('doccomment'));
+                    } else {
+                        $types[] = Type::fromDecl($method->returnType->value);
+                    }
+                }
+            }
+            if (!empty($types)) {
+            	return $types;
+            }
+            return [new Type(Type::TYPE_MIXED)];
+        }
     }
 
 }

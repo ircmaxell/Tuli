@@ -55,6 +55,7 @@ class AnalyzeCommand extends Command {
         $this->loadRules();
         $parser = new CFGParser((new ParserFactory)->create(ParserFactory::PREFER_PHP7));
         $graphs = $this->getGraphsFromFiles($input->getArgument('files'), $input->getOption("exclude"), $parser);
+        $errors = $this->analyzeGraphs($graphs);
         if ($input->getOption('dump')) {
             $dumper = new Dumper;
             foreach ($graphs as $key => $graph) {
@@ -63,7 +64,6 @@ class AnalyzeCommand extends Command {
                 echo "\n";
             }
         }
-        $errors = $this->analyzeGraphs($graphs);
         if ($errors) {
             echo "\nErrors found:\n";
             foreach ($errors as $error) {

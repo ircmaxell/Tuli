@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "873090c350cf7e9ddb7b025123846887",
+    "hash": "818a0b5e17a4e344b29ad786f7c084e3",
     "packages": [
         {
             "name": "cilex/cilex",
@@ -130,12 +130,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ircmaxell/php-cfg.git",
-                "reference": "29a553b42189b55ec60d772bef1ea04b19556168"
+                "reference": "62ca38b4c961bd18267679e3986d616d6da7be02"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/29a553b42189b55ec60d772bef1ea04b19556168",
-                "reference": "29a553b42189b55ec60d772bef1ea04b19556168",
+                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/62ca38b4c961bd18267679e3986d616d6da7be02",
+                "reference": "62ca38b4c961bd18267679e3986d616d6da7be02",
                 "shasum": ""
             },
             "require": {
@@ -165,7 +165,7 @@
                 }
             ],
             "description": "A Control Flow Graph implementation for PHP",
-            "time": "2015-07-13 17:45:06"
+            "time": "2015-07-13 22:39:31"
         },
         {
             "name": "nikic/php-parser",
