@@ -20,6 +20,8 @@ class TypeReconstructor {
         foreach ($components['variables'] as $op) {
             if (!empty($op->type) && $op->type->type !== Type::TYPE_UNKNOWN) {
                 $resolved[$op] = $op->type;
+            } elseif ($op instanceof Operand\BoundVariable && $op->scope === Operand\BoundVariable::SCOPE_OBJECT) {
+                $resolved[$op] = $op->type = Type::fromValue($op->extra->value);
             } elseif ($op instanceof Operand\Literal) {
                 $resolved[$op] = $op->type = Type::fromValue($op->value);
             } else {
@@ -35,7 +37,7 @@ class TypeReconstructor {
         $round = 1;
         do {
             echo "Round " . $round++ . " (" . count($unresolved) . " unresolved variables out of " . count($components['variables']) . ")\n";
-            $start = round(count($resolved) / count($unresolved), 6);
+            $start = count($unresolved);
             $i = 0;
             $toRemove = [];
             foreach ($unresolved as $k => $var) {
@@ -56,13 +58,16 @@ class TypeReconstructor {
                 $unresolved->detach($remove);
             }
             echo "\n";
-        } while (count($unresolved) > 0 && $start < round(count($resolved) / count($unresolved), 6));
+        } while (count($unresolved) > 0 && $start > count($unresolved));
         foreach ($resolved as $var) {
             $var->type = $resolved[$var];
         }
         foreach ($unresolved as $var) {
+            var_dump($var);
+            die("testing\n");
             $var->type = $unresolved[$var];
         }
+        echo count($unresolved) . " Variables Left Unresolved\n";
     }
 
     protected function computeMergedType(array $types) {

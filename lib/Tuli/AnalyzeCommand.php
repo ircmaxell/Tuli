@@ -133,6 +133,10 @@ class AnalyzeCommand extends Command {
         return $graphs;
     }
 
+    /**
+     * @param PHPCfg\Block[] $blocks
+     * @return array The result
+     */
     protected function preProcess(array $blocks) {
         $traverser = new Traverser;
         $declarations = new Visitor\DeclarationFinder;

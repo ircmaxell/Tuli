@@ -17,10 +17,24 @@ class Type {
     const TYPE_OBJECT   = 512; // unknown object type
     const TYPE_MIXED    = 1023; // all others combined
 
+    /**
+     * @var int
+     */
     public $type = 0;
+    /**
+     * @var Tuli\Type[]
+     */
     public $subTypes = [];
+    /**
+     * @var string[]
+     */
     public $userTypes = [];
 
+    /**
+     * @param int      $type
+     * @param Tuli\Type[]   $subTypes
+     * @param string[] $userTypes
+     */
     public function __construct($type, array $subTypes = [], array $userTypes = []) {
         $this->type = $type;
         $this->subTypes = $subTypes;
@@ -30,6 +44,10 @@ class Type {
         }
     }
 
+    /**
+     * Get the primitives
+     * @return string[]
+     */
     public static function getPrimitives() {
         return [
             Type::TYPE_VOID => 'void',
@@ -45,6 +63,9 @@ class Type {
         ];
     }
 
+    /**
+     * @return string
+     */
     public function __toString() {
         if ($this->type === Type::TYPE_UNKNOWN) {
             return "unknown";
@@ -111,8 +132,15 @@ class Type {
         }
         var_dump($this->type);
         throw new \RuntimeException("Unknown type thrown");
+        return "unknown";
     }
 
+    /**
+     * @param string $kind
+     * @param string $comment
+     * @param string $name The name of the parameter
+     * @return Tuli\Type The type
+     */
     public static function extractTypeFromComment($kind, $comment, $name = '') {
         switch ($kind) {
             case 'var':
@@ -137,8 +165,12 @@ class Type {
         return new Type(Type::TYPE_MIXED);
     }
 
+    /**
+     * @param string $decl
+     * @return Tuli\Type The type
+     */
     public static function fromDecl($decl) {
-        if ($decl instanceof Type) {
+        if ($decl instanceof self) {
             return $decl;
         } elseif (!is_string($decl)) {
             throw new \LogicException("Should never happen");
@@ -194,6 +226,10 @@ class Type {
         return new Type(Type::TYPE_USER, [], [$decl]);
     }
 
+    /**
+     * @param mixed $value
+     * @return Tuli\Type The type
+     */
     public static function fromValue($value) {
         if (is_int($value)) {
             return new Type(Type::TYPE_LONG);
@@ -207,6 +243,10 @@ class Type {
         throw new \RuntimeException("Unknown value type found: " . gettype($value));
     }
 
+    /**
+     * @param Type $type
+     * @return bool The status
+     */
     public function equals(Type $type) {
         if ($type->type !== $this->type) {
             return false;

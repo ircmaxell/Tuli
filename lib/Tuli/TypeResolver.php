@@ -24,6 +24,11 @@ class TypeResolver {
         if ($a->equals($b)) {
             return true;
         }
+        if ($b->type === Type::TYPE_CALLABLE) {
+            // TODO: do a true callable check
+            // Callable is hard to do statically... 
+            return true;
+        }
         if ($a->type === Type::TYPE_LONG && $b->type === Type::TYPE_DOUBLE) {
             return true;
         }

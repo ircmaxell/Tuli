@@ -76,8 +76,10 @@ class ArgumentType implements Rule {
     protected function verifyCall($func, $call, $components, $name) {
         $errors = [];
         foreach ($func->params as $idx => $param) {
-            if (!isset($call->args[$idx]) && !$param->defaultVar) {
-                $errors[] = ["Missing required argument $idx for call $name()", $call];
+            if (!isset($call->args[$idx])) {
+                if (!$param->defaultVar) {
+                    $errors[] = ["Missing required argument $idx for call $name()", $call];
+                }
                 continue;
             }
             if ($param->type) {
