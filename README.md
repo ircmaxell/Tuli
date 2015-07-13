@@ -4,6 +4,20 @@ Usage:
 
     bin/tuli analyze file1 file2 path
 
+## Installation
+
+Install it as a composer dependency!!!
+
+   $ composer require ircmaxell/tuli dev-master
+
+Then simply execute `vendor/bin/tuli` as normal
+
+Or check it out into its own project. Then `composer install` the dependencies:
+
+    $ composer install
+
+Then simply `bin/tuli` to execute.
+
 ## Example:
 
 code.php:
@@ -126,4 +140,3 @@ Again, it found 3 errors:
 
     We know that if you use type A or C, you're trying to pass a float to something that declares an integer.
 
-    

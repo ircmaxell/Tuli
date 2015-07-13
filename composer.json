@@ -21,5 +21,8 @@
         "psr-4": {
             "Tuli\\": "lib/Tuli/"
         }
-    }
+    },
+    "bin": [
+        "bin/tuli"
+    ]
 }
