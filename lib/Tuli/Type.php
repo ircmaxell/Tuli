@@ -25,6 +25,9 @@ class Type {
         $this->type = $type;
         $this->subTypes = $subTypes;
         $this->userTypes = $userTypes;
+        if ($this->userTypes && 0 === ($type & Type::TYPE_USER)) {
+            throw new \RuntimeException("Only user types can have user types");
+        }
     }
 
     public static function getPrimitives() {

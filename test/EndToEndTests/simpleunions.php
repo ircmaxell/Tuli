@@ -23,7 +23,7 @@ return [
         ],
         [
             "line" => 11,
-            "message" => "Type mismatch on foo() argument 0, found array expecting int|string",
+            "message" => "Type mismatch on foo() argument 0, found int[] expecting int|string",
         ],
         
     ]

@@ -19,7 +19,7 @@ class EndToEndTest extends \PHPUnit_Framework_TestCase {
         );
         $tests = [];
         foreach ($it as $file) {
-            $tests[] = require($file);
+            $tests[] = array_merge([basename($file)], require($file));
         }
         return $tests;
     }
@@ -36,7 +36,7 @@ class EndToEndTest extends \PHPUnit_Framework_TestCase {
     /**
      * @dataProvider provideTest
      */
-    public function testDecl($code, $expected) {
+    public function testDecl($file, $code, $expected) {
         $blocks = ["file.php" => $this->parser->parse($code, "file.php")];
         ob_start();
         $actual = $this->analyzer->analyzeGraphs($blocks);
@@ -51,10 +51,10 @@ class EndToEndTest extends \PHPUnit_Framework_TestCase {
                     continue 2;
                 }
             }
-            $this->fail("Did not find error in result: " . $error['message'] . " expected on line " . $error['line']);
+            $this->fail("$file: Did not find error in result: " . $error['message'] . " expected on line " . $error['line']);
         }
         foreach ($actual as $value) {
-            $this->fail("Unexpected error: " . $value[0] . " on line " . $value[1]->getLine());
+            $this->fail("$file: Unexpected error: " . $value[0] . " on line " . $value[1]->getLine());
         }
     }
 

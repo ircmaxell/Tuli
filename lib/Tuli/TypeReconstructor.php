@@ -94,7 +94,7 @@ class TypeReconstructor {
 			$userTypes = array_merge($userTypes, $type->userTypes);
 			$subTypes = array_merge($subTypes, $type->subTypes);
 		}
-		return new Type($value, $userTypes, $subTypes);
+		return new Type($value, $subTypes, $userTypes);
 	}
 
 	protected function resolveVar(Operand $var, \SplObjectStorage $resolved) {
@@ -118,6 +118,17 @@ class TypeReconstructor {
 	protected function resolveVarOp(Operand $var, Op $op, \SplObjectStorage $resolved) {
 		switch ($op->getType()) {
 			case 'Expr_Array':
+				$types = [];
+				foreach ($op->values as $value) {
+					if (!isset($resolved[$value])) {
+						return false;
+					}
+					$types[] = $resolved[$value];
+				}
+				$r = $this->computeMergedType($types);
+				if ($r) {
+					return [new Type(Type::TYPE_ARRAY, [$r])];
+				}
 			case 'Expr_Cast_Array':
 				// Todo: determine subtypes better
 				return [new Type(Type::TYPE_ARRAY)];
