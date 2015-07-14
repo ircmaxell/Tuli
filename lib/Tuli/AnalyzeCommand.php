@@ -18,6 +18,9 @@ use PHPCfg\Op;
 
 class AnalyzeCommand extends Command {
 
+	/**
+	 * @var string[]
+	 */
     protected $defaultSkipExtensions = [
         'md',
         'markdown',
@@ -41,6 +44,9 @@ class AnalyzeCommand extends Command {
         'xsd',
     ];
 
+    /**
+     * @var Tuli\Rule[]
+     */
     protected $rules = [];
 
     protected function configure() {
@@ -111,7 +117,7 @@ class AnalyzeCommand extends Command {
                     new \RecursiveIteratorIterator(
                         new \RecursiveDirectoryIterator($file)
                     ),
-                    function($file) use ($excludeRegex) {
+                    function(\SplFileInfo $file) use ($excludeRegex) {
                         if (preg_match($excludeRegex, $file->getPathName())) {
                             return false;
                         }

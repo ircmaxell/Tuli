@@ -561,9 +561,9 @@ class TypeReconstructor {
         if ($resolved->contains($class)) {
             $userTypes = [];
             if ($resolved[$class]->type === Type::TYPE_STRING) {
-                if (!isset($class->value)) {
-                    var_dump($resolved[$class]);
-                    die();
+                if (!$class instanceof Operand\Literal) {
+                    // variable class name, for now just return object
+                    return [new Type(Type::TYPE_OBJECT)];
                 }
                 $userTypes = [$class->value];
             } elseif ($resolved[$class]->type !== Type::TYPE_USER) {
