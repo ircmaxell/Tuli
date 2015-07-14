@@ -18,9 +18,9 @@ use PHPCfg\Op;
 
 class AnalyzeCommand extends Command {
 
-	/**
-	 * @var string[]
-	 */
+    /**
+     * @var string[]
+     */
     protected $defaultSkipExtensions = [
         'md',
         'markdown',
