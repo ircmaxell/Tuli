@@ -1,5 +1,12 @@
 <?php
 
+/*
+ * This file is part of Tuli, a static analyzer for PHP
+ *
+ * @copyright 2015 Anthony Ferrara. All rights reserved
+ * @license MIT See LICENSE at the root of the project for more info
+ */
+
 namespace Tuli;
 
 class Type {
@@ -31,9 +38,9 @@ class Type {
     public $userTypes = [];
 
     /**
-     * @param int      $type
-     * @param Tuli\Type[]   $subTypes
-     * @param string[] $userTypes
+     * @param int         $type
+     * @param Tuli\Type[] $subTypes
+     * @param string[]    $userTypes
      */
     public function __construct($type, array $subTypes = [], array $userTypes = []) {
         $this->type = $type;
@@ -46,20 +53,21 @@ class Type {
 
     /**
      * Get the primitives
+     *
      * @return string[]
      */
     public static function getPrimitives() {
         return [
-            Type::TYPE_VOID => 'void',
-            Type::TYPE_LONG => 'int',
-            Type::TYPE_DOUBLE => 'float',
-            Type::TYPE_STRING => 'string',
-            Type::TYPE_BOOLEAN => 'bool',
-            Type::TYPE_NULL => 'null',
-            Type::TYPE_USER => '',
-            Type::TYPE_ARRAY => 'array',
+            Type::TYPE_VOID     => 'void',
+            Type::TYPE_LONG     => 'int',
+            Type::TYPE_DOUBLE   => 'float',
+            Type::TYPE_STRING   => 'string',
+            Type::TYPE_BOOLEAN  => 'bool',
+            Type::TYPE_NULL     => 'null',
+            Type::TYPE_USER     => '',
+            Type::TYPE_ARRAY    => 'array',
             Type::TYPE_CALLABLE => 'callable',
-            Type::TYPE_OBJECT => 'object',
+            Type::TYPE_OBJECT   => 'object',
         ];
     }
 
@@ -138,7 +146,8 @@ class Type {
     /**
      * @param string $kind
      * @param string $comment
-     * @param string $name The name of the parameter
+     * @param string $name    The name of the parameter
+     *
      * @return Tuli\Type The type
      */
     public static function extractTypeFromComment($kind, $comment, $name = '') {
@@ -168,6 +177,7 @@ class Type {
 
     /**
      * @param string $decl
+     *
      * @return Tuli\Type The type
      */
     public static function fromDecl($decl) {
@@ -229,6 +239,7 @@ class Type {
 
     /**
      * @param mixed $value
+     *
      * @return Tuli\Type The type
      */
     public static function fromValue($value) {
@@ -246,6 +257,7 @@ class Type {
 
     /**
      * @param Type $type
+     *
      * @return bool The status
      */
     public function equals(Type $type) {

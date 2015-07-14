@@ -1,26 +1,33 @@
 <?php
 
+/*
+ * This file is part of Tuli, a static analyzer for PHP
+ *
+ * @copyright 2015 Anthony Ferrara. All rights reserved
+ * @license MIT See LICENSE at the root of the project for more info
+ */
+
 namespace Tuli;
 
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use PHPCfg\Block;
+use PHPCfg\Dumper;
+use PHPCfg\Op;
+use PHPCfg\Operand;
+use PHPCfg\Parser as CFGParser;
+use PHPCfg\Traverser;
+use PHPCfg\Visitor;
+use PhpParser\ParserFactory;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use PhpParser\ParserFactory;
-use PHPCfg\Parser as CFGParser;
-use PHPCfg\Dumper;
-use PHPCfg\Block;
-use PHPCfg\Visitor;
-use PHPCfg\Traverser;
-use PHPCfg\Operand;
-use PHPCfg\Op;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class AnalyzeCommand extends Command {
 
-	/**
-	 * @var string[]
-	 */
+    /**
+     * @var string[]
+     */
     protected $defaultSkipExtensions = [
         'md',
         'markdown',
@@ -141,6 +148,7 @@ class AnalyzeCommand extends Command {
 
     /**
      * @param PHPCfg\Block[] $blocks
+     *
      * @return array The result
      */
     protected function preProcess(array $blocks) {
@@ -158,18 +166,18 @@ class AnalyzeCommand extends Command {
             $traverser->traverse($block);
         }
         return [
-            "cfg" => $blocks,
-            "constants" => $declarations->getConstants(),
-            "traits" => $declarations->getTraits(),
-            "classes" => $declarations->getClasses(),
-            "methods" => $declarations->getMethods(),
-            "functions" => $declarations->getFunctions(),
-            "functionLookup" => $this->buildFunctionLookup($declarations->getFunctions()),
-            "interfaces" => $declarations->getInterfaces(),
-            "variables" => $variables->getVariables(),
-            "callResolver" => $calls,
-            "methodCalls" => $this->findMethodCalls($blocks),
-            "newCalls" => $this->findNewCalls($blocks),
+            "cfg"              => $blocks,
+            "constants"        => $declarations->getConstants(),
+            "traits"           => $declarations->getTraits(),
+            "classes"          => $declarations->getClasses(),
+            "methods"          => $declarations->getMethods(),
+            "functions"        => $declarations->getFunctions(),
+            "functionLookup"   => $this->buildFunctionLookup($declarations->getFunctions()),
+            "interfaces"       => $declarations->getInterfaces(),
+            "variables"        => $variables->getVariables(),
+            "callResolver"     => $calls,
+            "methodCalls"      => $this->findMethodCalls($blocks),
+            "newCalls"         => $this->findNewCalls($blocks),
             "internalTypeInfo" => new InternalArgInfo,
         ];
     }
@@ -192,6 +200,7 @@ class AnalyzeCommand extends Command {
 
     /**
      * @param array $components
+     *
      * @return array The result
      */
     protected function computeTypeMatrix($components) {
