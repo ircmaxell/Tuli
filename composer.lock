@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "818a0b5e17a4e344b29ad786f7c084e3",
+    "hash": "381c47caaf2028d5ab3f4261a9561da4",
     "packages": [
         {
             "name": "cilex/cilex",
@@ -130,21 +130,20 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ircmaxell/php-cfg.git",
-                "reference": "9f734c4412158923f1e767cb8c4f260827ada3a0"
+                "reference": "baf0316e5d38ccb1b5798c3d2764c4e4e38ea44c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/9f734c4412158923f1e767cb8c4f260827ada3a0",
-                "reference": "9f734c4412158923f1e767cb8c4f260827ada3a0",
+                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/baf0316e5d38ccb1b5798c3d2764c4e4e38ea44c",
+                "reference": "baf0316e5d38ccb1b5798c3d2764c4e4e38ea44c",
                 "shasum": ""
             },
             "require": {
                 "nikic/php-parser": "dev-master",
-                "php": ">=5.5",
-                "phploc/phploc": "^2.1",
-                "sdboyer/gliph": "^0.7.0"
+                "php": ">=5.5"
             },
             "require-dev": {
+                "fabpot/php-cs-fixer": "1.*",
                 "phpunit/phpunit": "^4.7"
             },
             "type": "library",
@@ -165,7 +164,7 @@
                 }
             ],
             "description": "A Control Flow Graph implementation for PHP",
-            "time": "2015-07-14 13:01:35"
+            "time": "2015-07-14 22:49:38"
         },
         {
             "name": "nikic/php-parser",
@@ -173,12 +172,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "0265c28e6e8cb5b180105b4afe0e89b728bfc7f9"
+                "reference": "e0a75ededaecccee2f083f951f4611ef95f6a562"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/0265c28e6e8cb5b180105b4afe0e89b728bfc7f9",
-                "reference": "0265c28e6e8cb5b180105b4afe0e89b728bfc7f9",
+                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/e0a75ededaecccee2f083f951f4611ef95f6a562",
+                "reference": "e0a75ededaecccee2f083f951f4611ef95f6a562",
                 "shasum": ""
             },
             "require": {
@@ -210,60 +209,7 @@
                 "parser",
                 "php"
             ],
-            "time": "2015-07-12 21:56:57"
-        },
-        {
-            "name": "phploc/phploc",
-            "version": "2.1.x-dev",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sebastianbergmann/phploc.git",
-                "reference": "406a03edd7587935fd91a4e2e1a81724914b50e1"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phploc/zipball/406a03edd7587935fd91a4e2e1a81724914b50e1",
-                "reference": "406a03edd7587935fd91a4e2e1a81724914b50e1",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.3",
-                "sebastian/finder-facade": "~1.1",
-                "sebastian/git": "~2.0",
-                "sebastian/version": "~1.0.3",
-                "symfony/console": "~2.5"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~4"
-            },
-            "bin": [
-                "phploc"
-            ],
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.1-dev"
-                }
-            },
-            "autoload": {
-                "classmap": [
-                    "src/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Sebastian Bergmann",
-                    "email": "sebastian@phpunit.de",
-                    "role": "lead"
-                }
-            ],
-            "description": "A tool for quickly measuring the size of a PHP project.",
-            "homepage": "https://github.com/sebastianbergmann/phploc",
-            "time": "2015-06-21 07:59:25"
+            "time": "2015-07-14 19:13:42"
         },
         {
             "name": "pimple/pimple",
@@ -310,176 +256,6 @@
                 "dependency injection"
             ],
             "time": "2014-04-20 07:24:09"
-        },
-        {
-            "name": "sdboyer/gliph",
-            "version": "0.7.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sdboyer/gliph.git",
-                "reference": "a2192317529b5985eecbccc6e3a1c4e2c475c4da"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sdboyer/gliph/zipball/a2192317529b5985eecbccc6e3a1c4e2c475c4da",
-                "reference": "a2192317529b5985eecbccc6e3a1c4e2c475c4da",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.5"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "3.7.*",
-                "satooshi/php-coveralls": "0.6.*"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "Gliph\\": [
-                        "src/",
-                        "tests/"
-                    ]
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Sam Boyer",
-                    "email": "tech@samboyer.org"
-                }
-            ],
-            "description": "A graph library for PHP.",
-            "homepage": "http://github.com/sdboyer/gliph",
-            "keywords": [
-                "gliph",
-                "graph",
-                "library",
-                "php",
-                "spl"
-            ],
-            "time": "2014-09-03 17:57:27"
-        },
-        {
-            "name": "sebastian/finder-facade",
-            "version": "1.2.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sebastianbergmann/finder-facade.git",
-                "reference": "a520dcc3dd39160eea480daa3426f4fd419a327b"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/finder-facade/zipball/a520dcc3dd39160eea480daa3426f4fd419a327b",
-                "reference": "a520dcc3dd39160eea480daa3426f4fd419a327b",
-                "shasum": ""
-            },
-            "require": {
-                "symfony/finder": "~2.3",
-                "theseer/fdomdocument": "~1.3"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "src/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Sebastian Bergmann",
-                    "email": "sebastian@phpunit.de",
-                    "role": "lead"
-                }
-            ],
-            "description": "FinderFacade is a convenience wrapper for Symfony's Finder component.",
-            "homepage": "https://github.com/sebastianbergmann/finder-facade",
-            "time": "2015-06-04 08:11:58"
-        },
-        {
-            "name": "sebastian/git",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sebastianbergmann/git.git",
-                "reference": "27de483134bab3db7663cd400e145b58f9edd8ec"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/git/zipball/27de483134bab3db7663cd400e145b58f9edd8ec",
-                "reference": "27de483134bab3db7663cd400e145b58f9edd8ec",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.3"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.0-dev"
-                }
-            },
-            "autoload": {
-                "classmap": [
-                    "src/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Sebastian Bergmann",
-                    "email": "sebastian@phpunit.de"
-                }
-            ],
-            "description": "Simple wrapper for Git",
-            "homepage": "http://www.github.com/sebastianbergmann/git",
-            "keywords": [
-                "git"
-            ],
-            "time": "2015-06-30 05:13:18"
-        },
-        {
-            "name": "sebastian/version",
-            "version": "1.0.6",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sebastianbergmann/version.git",
-                "reference": "58b3a85e7999757d6ad81c787a1fbf5ff6c628c6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/version/zipball/58b3a85e7999757d6ad81c787a1fbf5ff6c628c6",
-                "reference": "58b3a85e7999757d6ad81c787a1fbf5ff6c628c6",
-                "shasum": ""
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "src/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Sebastian Bergmann",
-                    "email": "sebastian@phpunit.de",
-                    "role": "lead"
-                }
-            ],
-            "description": "Library that helps with managing the version number of Git-hosted PHP projects",
-            "homepage": "https://github.com/sebastianbergmann/version",
-            "time": "2015-06-21 13:59:46"
         },
         {
             "name": "symfony/console",
@@ -635,46 +411,6 @@
             "description": "Symfony Process Component",
             "homepage": "https://symfony.com",
             "time": "2015-07-01 14:16:54"
-        },
-        {
-            "name": "theseer/fdomdocument",
-            "version": "1.6.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/theseer/fDOMDocument.git",
-                "reference": "d9ad139d6c2e8edf5e313ffbe37ff13344cf0684"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/theseer/fDOMDocument/zipball/d9ad139d6c2e8edf5e313ffbe37ff13344cf0684",
-                "reference": "d9ad139d6c2e8edf5e313ffbe37ff13344cf0684",
-                "shasum": ""
-            },
-            "require": {
-                "ext-dom": "*",
-                "lib-libxml": "*",
-                "php": ">=5.3.3"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "src/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Arne Blankerts",
-                    "email": "arne@blankerts.de",
-                    "role": "lead"
-                }
-            ],
-            "description": "The classes contained within this repository extend the standard DOM to use exceptions at all occasions of errors instead of PHP warnings or notices. They also add various custom methods and shortcuts for convenience and to simplify the usage of DOM.",
-            "homepage": "https://github.com/theseer/fDOMDocument",
-            "time": "2015-05-27 22:58:02"
         }
     ],
     "packages-dev": [
@@ -1598,6 +1334,41 @@
             "description": "Provides functionality to recursively process PHP variables",
             "homepage": "http://www.github.com/sebastianbergmann/recursion-context",
             "time": "2015-06-21 08:04:50"
+        },
+        {
+            "name": "sebastian/version",
+            "version": "1.0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sebastianbergmann/version.git",
+                "reference": "58b3a85e7999757d6ad81c787a1fbf5ff6c628c6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sebastianbergmann/version/zipball/58b3a85e7999757d6ad81c787a1fbf5ff6c628c6",
+                "reference": "58b3a85e7999757d6ad81c787a1fbf5ff6c628c6",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastian Bergmann",
+                    "email": "sebastian@phpunit.de",
+                    "role": "lead"
+                }
+            ],
+            "description": "Library that helps with managing the version number of Git-hosted PHP projects",
+            "homepage": "https://github.com/sebastianbergmann/version",
+            "time": "2015-06-21 13:59:46"
         },
         {
             "name": "symfony/event-dispatcher",

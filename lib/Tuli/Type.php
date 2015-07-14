@@ -1,5 +1,12 @@
 <?php
 
+/*
+ * This file is part of Tuli, a static analyzer for PHP
+ *
+ * @copyright 2015 Anthony Ferrara. All rights reserved
+ * @license MIT See LICENSE at the root of the project for more info
+ */
+
 namespace Tuli;
 
 class Type {
@@ -22,7 +29,7 @@ class Type {
      */
     public $type = 0;
     /**
-     * @var Tuli\Type[]
+     * @var Type[]
      */
     public $subTypes = [];
     /**
@@ -32,7 +39,7 @@ class Type {
 
     /**
      * @param int      $type
-     * @param Tuli\Type[]   $subTypes
+     * @param Type[]   $subTypes
      * @param string[] $userTypes
      */
     public function __construct($type, array $subTypes = [], array $userTypes = []) {
@@ -46,20 +53,21 @@ class Type {
 
     /**
      * Get the primitives
+     *
      * @return string[]
      */
     public static function getPrimitives() {
         return [
-            Type::TYPE_VOID => 'void',
-            Type::TYPE_LONG => 'int',
-            Type::TYPE_DOUBLE => 'float',
-            Type::TYPE_STRING => 'string',
-            Type::TYPE_BOOLEAN => 'bool',
-            Type::TYPE_NULL => 'null',
-            Type::TYPE_USER => '',
-            Type::TYPE_ARRAY => 'array',
+            Type::TYPE_VOID     => 'void',
+            Type::TYPE_LONG     => 'int',
+            Type::TYPE_DOUBLE   => 'float',
+            Type::TYPE_STRING   => 'string',
+            Type::TYPE_BOOLEAN  => 'bool',
+            Type::TYPE_NULL     => 'null',
+            Type::TYPE_USER     => '',
+            Type::TYPE_ARRAY    => 'array',
             Type::TYPE_CALLABLE => 'callable',
-            Type::TYPE_OBJECT => 'object',
+            Type::TYPE_OBJECT   => 'object',
         ];
     }
 
@@ -138,8 +146,9 @@ class Type {
     /**
      * @param string $kind
      * @param string $comment
-     * @param string $name The name of the parameter
-     * @return Tuli\Type The type
+     * @param string $name    The name of the parameter
+     *
+     * @return Type The type
      */
     public static function extractTypeFromComment($kind, $comment, $name = '') {
         $match = [];
@@ -168,7 +177,8 @@ class Type {
 
     /**
      * @param string $decl
-     * @return Tuli\Type The type
+     *
+     * @return Type The type
      */
     public static function fromDecl($decl) {
         if ($decl instanceof Type) {
@@ -180,6 +190,11 @@ class Type {
         }
         if ($decl[0] === '\\') {
             $decl = substr($decl, 1);
+        } elseif ($decl[0] === '?') {
+            $decl = substr($decl, 1);
+            $type = Type::fromDecl($decl);
+            $type->type |= Type::TYPE_NULL;
+            return $type;
         }
         switch (strtolower($decl)) {
             case 'boolean':
@@ -198,6 +213,8 @@ class Type {
                 return new Type(Type::TYPE_ARRAY);
             case 'callable':
                 return new Type(Type::TYPE_CALLABLE);
+            case 'null':
+                return new Type(Type::TYPE_NULL);
         }
         if (strpos($decl, '|') !== false) {
             $parts = explode('|', $decl);
@@ -229,7 +246,8 @@ class Type {
 
     /**
      * @param mixed $value
-     * @return Tuli\Type The type
+     *
+     * @return Type The type
      */
     public static function fromValue($value) {
         if (is_int($value)) {
@@ -246,6 +264,7 @@ class Type {
 
     /**
      * @param Type $type
+     *
      * @return bool The status
      */
     public function equals(Type $type) {
@@ -261,6 +280,33 @@ class Type {
             return array_diff($left, $right) === [] && array_diff($right, $left) === [];
         }
         return true;
+    }
+
+    /**
+     * @param Type $toRemove
+     *
+     * @return Type the removed type
+     */
+    public function removeType(Type $type) {
+        $new = new Type(0);
+        $mask = ~$type->type;
+        if ($this->type & Type::TYPE_USER) {
+            foreach ($this->userTypes as $ut) {
+                $lower = strtolower($ut);
+                foreach ($type->userTypes as $st) {
+                    if (strtolower($st) === $lower) {
+                        continue 2;
+                    }
+                }
+                $mask |= Type::TYPE_USER;
+                $new->userTypes[] = $ut;
+            }
+        }
+        if ($type->type & Type::TYPE_ARRAY) {
+            // Handle the array
+        }
+        $new->type = ($this->type & $mask);
+        return $new;
     }
 
 }
