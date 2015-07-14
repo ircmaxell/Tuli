@@ -78,7 +78,7 @@ class AnalyzeCommand extends Command {
             }
         }
         if ($errors) {
-            echo "\nErrors found:\n";
+            echo "\nErrors found (" . count($errors) . "):\n";
             foreach ($errors as $error) {
                 $this->emitError($error[0], $error[1]);
             }

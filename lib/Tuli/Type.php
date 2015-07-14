@@ -29,7 +29,7 @@ class Type {
      */
     public $type = 0;
     /**
-     * @var Tuli\Type[]
+     * @var Type[]
      */
     public $subTypes = [];
     /**
@@ -38,9 +38,9 @@ class Type {
     public $userTypes = [];
 
     /**
-     * @param int         $type
-     * @param Tuli\Type[] $subTypes
-     * @param string[]    $userTypes
+     * @param int      $type
+     * @param Type[]   $subTypes
+     * @param string[] $userTypes
      */
     public function __construct($type, array $subTypes = [], array $userTypes = []) {
         $this->type = $type;
@@ -148,7 +148,7 @@ class Type {
      * @param string $comment
      * @param string $name    The name of the parameter
      *
-     * @return Tuli\Type The type
+     * @return Type The type
      */
     public static function extractTypeFromComment($kind, $comment, $name = '') {
         $match = [];
@@ -178,7 +178,7 @@ class Type {
     /**
      * @param string $decl
      *
-     * @return Tuli\Type The type
+     * @return Type The type
      */
     public static function fromDecl($decl) {
         if ($decl instanceof Type) {
@@ -190,6 +190,11 @@ class Type {
         }
         if ($decl[0] === '\\') {
             $decl = substr($decl, 1);
+        } elseif ($decl[0] === '?') {
+            $decl = substr($decl, 1);
+            $type = Type::fromDecl($decl);
+            $type->type |= Type::TYPE_NULL;
+            return $type;
         }
         switch (strtolower($decl)) {
             case 'boolean':
@@ -208,6 +213,8 @@ class Type {
                 return new Type(Type::TYPE_ARRAY);
             case 'callable':
                 return new Type(Type::TYPE_CALLABLE);
+            case 'null':
+                return new Type(Type::TYPE_NULL);
         }
         if (strpos($decl, '|') !== false) {
             $parts = explode('|', $decl);
@@ -240,7 +247,7 @@ class Type {
     /**
      * @param mixed $value
      *
-     * @return Tuli\Type The type
+     * @return Type The type
      */
     public static function fromValue($value) {
         if (is_int($value)) {
@@ -273,6 +280,33 @@ class Type {
             return array_diff($left, $right) === [] && array_diff($right, $left) === [];
         }
         return true;
+    }
+
+    /**
+     * @param Type $toRemove
+     *
+     * @return Type the removed type
+     */
+    public function removeType(Type $type) {
+        $new = new Type(0);
+        $mask = ~$type->type;
+        if ($this->type & Type::TYPE_USER) {
+            foreach ($this->userTypes as $ut) {
+                $lower = strtolower($ut);
+                foreach ($type->userTypes as $st) {
+                    if (strtolower($st) === $lower) {
+                        continue 2;
+                    }
+                }
+                $mask |= Type::TYPE_USER;
+                $new->userTypes[] = $ut;
+            }
+        }
+        if ($type->type & Type::TYPE_ARRAY) {
+            // Handle the array
+        }
+        $new->type = ($this->type & $mask);
+        return $new;
     }
 
 }

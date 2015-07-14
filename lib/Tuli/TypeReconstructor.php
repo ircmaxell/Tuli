@@ -73,6 +73,11 @@ class TypeReconstructor {
         echo count($unresolved) . " Variables Left Unresolved\n";
     }
 
+    /**
+     * @param Type[] $types
+     *
+     * @return Type
+     */
     protected function computeMergedType(array $types) {
         if (count($types) === 1) {
             return $types[0];
@@ -368,11 +373,19 @@ class TypeReconstructor {
                 // TODO: we may be able to determine these...
                 return [new Type(Type::TYPE_MIXED)];
             case 'Expr_TypeAssert':
+                if ($op->assertedType[0] === '!') {
+                    // Negative assertion!!!
+                    if (!$resolved->contains($op->expr)) {
+                        // We need to unset the types in the $op
+                        return false;
+                    }
+                    $type = $resolved[$op->expr];
+                    $toRemove = Type::fromDecl(substr($op->assertedType, 1));
+                    return [$type->removeType($toRemove)];
+                }
                 return [Type::fromDecl($op->assertedType)];
             case 'Expr_TypeUnAssert':
-                if ($resolved->contains($op->assert->expr)) {
-                    return [$resolved[$op->assert->expr]];
-                }
+                throw new \RuntimeException("Unassertions should not occur anymore");
             case 'Expr_UnaryMinus':
             case 'Expr_UnaryPlus':
                 if ($resolved->contains($op->expr)) {
@@ -562,6 +575,10 @@ class TypeReconstructor {
     }
 
     private function resolveMethodCall($class, $name, Op $op, \SplObjectStorage $resolved) {
+        if (!$name instanceof Operand\Literal) {
+            // Variable Method Call
+            return [new Type(Type::TYPE_MIXED)];
+        }
         $name = strtolower($name->value);
         if ($resolved->contains($class)) {
             $userTypes = [];
