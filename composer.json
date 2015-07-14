@@ -10,7 +10,7 @@
     ],
     "require": {
         "php": ">=5.5",
-	    "ircmaxell/php-cfg": "dev-master",
+        "ircmaxell/php-cfg": "dev-master",
         "cilex/cilex": "1.*"
     },
     "require-dev": {
