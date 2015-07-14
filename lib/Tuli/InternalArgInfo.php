@@ -1444,7 +1444,7 @@ class InternalArgInfo {
         'expect_expectl' => ['int', 'expect'=>'', 'cases'=>'array', 'match='=>'array'],
         'expect_popen' => ['resource', 'command'=>'string'],
         'exp' => ['float', 'number'=>'float'],
-        'explode' => ['array', 'separator'=>'string', 'str'=>'string', 'limit='=>'int'],
+        'explode' => ['string[]', 'separator'=>'string', 'str'=>'string', 'limit='=>'int'],
         'expm1' => ['float', 'number'=>'float'],
         'extension_loaded' => ['bool', 'extension_name'=>'string'],
         'extract' => ['int', 'var_array'=>'array', 'extract_type='=>'int', 'prefix='=>'string'],
@@ -8503,11 +8503,15 @@ class InternalArgInfo {
                 $parts = explode('::', $key);
                 $class = strtolower($parts[0]);
                 if (!isset($this->methods[$class])) {
-                    $this->methods[$class] = [];
+                    $this->methods[$class] = [
+                        'extends' => [],
+                        'methods' => []
+                    ];
                 }
-                $this->methods[$class][strtolower($parts[1])] = $this->parseInfo($info);
+                $this->methods[$class]['methods'][strtolower($parts[1])] = $this->parseInfo($info);
             }
         }
+        $this->loadReflectables();
     }
 
     protected function parseInfo(array $info) {
@@ -8521,4 +8525,31 @@ class InternalArgInfo {
             'params' => $params,
         ];
     }
+
+    protected function loadReflectables() {
+        $data = array_merge(get_declared_classes(), get_declared_interfaces());
+        foreach ($data as $class) {
+            $r = new \ReflectionClass($class);
+            if (!$r->isInternal()) {
+                continue;
+            }
+            $name = strtolower($r->name);
+            if (!isset($this->methods[$name])) {
+                $this->methods[$name] = [
+                    'extends' => [],
+                    'methods' => []
+                ];
+                // TODO: load methods
+            }
+            do {
+                $this->methods[$name]['extends'][] = strtolower($r->name);
+                foreach ($r->getInterfaceNames() as $iname) {
+                    $this->methods[$name]['extends'][] = strtolower($iname);
+                }
+            } while ($r = $r->getParentClass());
+            $this->methods[$name]['extends'] = array_unique($this->methods[$name]['extends']);
+        }
+    }
+
+
 }

@@ -21,7 +21,7 @@ class TypeReconstructor {
             if (!empty($op->type) && $op->type->type !== Type::TYPE_UNKNOWN) {
                 $resolved[$op] = $op->type;
             } elseif ($op instanceof Operand\BoundVariable && $op->scope === Operand\BoundVariable::SCOPE_OBJECT) {
-                $resolved[$op] = $op->type = Type::fromValue($op->extra->value);
+                $resolved[$op] = $op->type = Type::fromDecl($op->extra->value);
             } elseif ($op instanceof Operand\Literal) {
                 $resolved[$op] = $op->type = Type::fromValue($op->value);
             } else {
@@ -561,6 +561,10 @@ class TypeReconstructor {
         if ($resolved->contains($class)) {
             $userTypes = [];
             if ($resolved[$class]->type === Type::TYPE_STRING) {
+                if (!isset($class->value)) {
+                    var_dump($resolved[$class]);
+                    die();
+                }
                 $userTypes = [$class->value];
             } elseif ($resolved[$class]->type !== Type::TYPE_USER) {
                 return [new Type(Type::TYPE_MIXED)];
@@ -571,12 +575,25 @@ class TypeReconstructor {
             foreach ($userTypes as $ut) {
                 $className = strtolower($ut);
                 if (!isset($this->components['resolves'][$className])) {
+                    if (isset($this->components['internalTypeInfo']->methods[$className])) {
+                        $types = [];
+                        foreach ($this->components['internalTypeInfo']->methods[$className]['extends'] as $child) {
+                            if (isset($this->components['internalTypeInfo']->methods[$child]['methods'][$name])) {
+                                $method = $this->components['internalTypeInfo']->methods[$child]['methods'][$name];
+                                if ($method['return']) {
+                                    $types[] = Type::fromDecl($method['return']);
+                                }
+                            }
+                        }
+                        if (!empty($types)) {
+                            return $types;
+                        }
+                    }
                     return [new Type(Type::TYPE_MIXED)];
                 }
                 foreach ($this->components['resolves'][$className] as $class) {
                     $method = $this->findMethod($class, $name);
                     if (!$method) {
-                        echo "$className::{$name} not found\n";
                         continue;
                     }
                     if (!$method->returnType) {

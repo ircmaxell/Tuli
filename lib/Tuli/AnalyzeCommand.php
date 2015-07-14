@@ -72,7 +72,7 @@ class AnalyzeCommand extends Command {
         }
     }
 
-    public function analyzeGraphs($graphs) {
+    public function analyzeGraphs(array $graphs) {
         $components = $this->preProcess($graphs);
         $components = $this->computeTypeMatrix($components);
         $components['typeResolver'] = new TypeResolver($components);
@@ -184,6 +184,10 @@ class AnalyzeCommand extends Command {
         return $methodCalls;
     }
 
+    /**
+     * @param array $components
+     * @return array The result
+     */
     protected function computeTypeMatrix($components) {
         // TODO: This is dirty, and needs cleaning
         // A extends B

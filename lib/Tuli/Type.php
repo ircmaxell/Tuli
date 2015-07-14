@@ -142,6 +142,7 @@ class Type {
      * @return Tuli\Type The type
      */
     public static function extractTypeFromComment($kind, $comment, $name = '') {
+        $match = [];
         switch ($kind) {
             case 'var':
                 if (preg_match('(@var\s+(\S+))', $comment, $match)) {
@@ -170,7 +171,7 @@ class Type {
      * @return Tuli\Type The type
      */
     public static function fromDecl($decl) {
-        if ($decl instanceof self) {
+        if ($decl instanceof Type) {
             return $decl;
         } elseif (!is_string($decl)) {
             throw new \LogicException("Should never happen");
