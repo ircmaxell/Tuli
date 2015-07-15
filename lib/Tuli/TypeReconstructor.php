@@ -9,6 +9,7 @@
 
 namespace Tuli;
 
+use PHPCfg\Assertion;
 use PHPCfg\Op;
 use PHPCfg\Operand;
 
@@ -165,6 +166,7 @@ class TypeReconstructor {
                     return [$resolved[$op->expr]];
                 }
                 break;
+            case 'Expr_InstanceOf':
             case 'Expr_BinaryOp_Equal':
             case 'Expr_BinaryOp_NotEqual':
             case 'Expr_BinaryOp_Greater':
@@ -179,7 +181,6 @@ class TypeReconstructor {
             case 'Expr_BooleanNot':
             case 'Expr_Cast_Bool':
             case 'Expr_Empty':
-            case 'Expr_InstanceOf':
             case 'Expr_Isset':
                 return [Type::bool()];
             case 'Expr_BinaryOp_BitwiseAnd':
@@ -286,14 +287,9 @@ class TypeReconstructor {
                 // TODO: infer this
                 return false;
             case 'Expr_New':
-                if ($op->class instanceof Operand\Literal) {
-                    return [new Type(Type::TYPE_OBJECT, [], $op->class->value)];
-                } elseif ($resolved->contains($op->class)) {
-                    $type = $resolved[$op->class];
-                    if ($type->type === Type::TYPE_OBJECT) {
-                        return [$type];
-                    }
-                    // Todo: handle intersection types
+                $type = $this->getClassType($op->class, $resolved);
+                if ($type) {
+                    return [$type];
                 }
                 return [Type::object()];
             case 'Expr_Param':
@@ -312,59 +308,33 @@ class TypeReconstructor {
                     return [$type];
                 }
                 return [$docType];
+            case 'Expr_PropertyFetch':
             case 'Expr_StaticPropertyFetch':
                 if (!$op->name instanceof Operand\Literal) {
                     // variable property fetch
                     return Type::mixed();
                 }
                 $propName = $op->name->value;
-                $objType = false;
-                if ($op->class instanceof Operand\Literal) {
-                    $objType = Type::fromDecl($op->class->value);
-                } elseif ($op->class instanceof Operand\BoundVariable && $op->class->scope === Operand\BoundVariable::SCOPE_OBJECT) {
-                    // $this reference
-                    assert($op->class->extra instanceof Operand\Literal);
-                    $objType = Type::fromDecl($op->var->extra->value);
-                } elseif ($resolved->contains($op->class)) {
-                    $objType = $resolved[$op->class];
+                if ($op instanceof Expr\PropertyFetch) {
+                    $objType = $this->getClassType($op->class, $resolved);
                 } else {
-                    return false;
+                    $objType = $this->getClassType($op->var, $resolved);
                 }
-                return $this->resolveProperty($objType, $propName);
-            case 'Expr_PropertyFetch':
-                if (!$op->name instanceof Operand\Literal) {
-                    // variable property fetch
-                    return false;
+                if ($objType) {
+                    return $this->resolveProperty($objType, $propName);
                 }
-                $propName = $op->name->value;
-                $objType = false;
-                if ($op->var instanceof Operand\BoundVariable && $op->var->scope === Operand\BoundVariable::SCOPE_OBJECT) {
-                    // $this reference
-                    assert($op->var->extra instanceof Operand\Literal);
-                    $objType = Type::fromDecl($op->var->extra->value);
-                } elseif ($resolved->contains($op->var)) {
-                    $objType = $resolved[$op->var];
-                } else {
-                    return false;
-                }
-                return $this->resolveProperty($objType, $propName);
+                return false;
             case 'Expr_Yield':
             case 'Expr_Include':
             
                 // TODO: we may be able to determine these...
                 return false;
-            case 'Expr_TypeAssert':
-                if ($op->assertedType[0] === '!') {
-                    // Negative assertion!!!
-                    if (!$resolved->contains($op->expr)) {
-                        // We need to unset the types in the $op
-                        return false;
-                    }
-                    $type = $resolved[$op->expr];
-                    $toRemove = Type::fromDecl(substr($op->assertedType, 1));
-                    return [$type->removeType($toRemove)];
+            case 'Expr_Assertion':
+                $tmp = $this->processAssertion($op->assertion, $op->expr, $resolved);
+                if ($tmp) {
+                    return [$tmp];
                 }
-                return [Type::fromDecl($op->assertedType)];
+                return false;
             case 'Expr_TypeUnAssert':
                 throw new \RuntimeException("Unassertions should not occur anymore");
             case 'Expr_UnaryMinus':
@@ -588,7 +558,7 @@ class TypeReconstructor {
             if ($resolved[$class]->type === Type::TYPE_STRING) {
                 if (!$class instanceof Operand\Literal) {
                     // variable class name, for now just return object
-                    return [new Type(Type::TYPE_OBJECT)];
+                    return [Type::mixed()];
                 }
                 $userType = $class->value;
             } elseif ($resolved[$class]->type !== Type::TYPE_OBJECT) {
@@ -632,6 +602,64 @@ class TypeReconstructor {
             }
             return false;
         }
+        return false;
     }
 
+    protected function getClassType(Operand $var, \SplObjectStorage $resolved) {
+        if ($var instanceof Operand\Literal) {
+            return new Type(Type::TYPE_OBJECT, [], $var->value);
+        } elseif ($var instanceof Operand\BoundVariable && $var->scope === Operand\BoundVariable::SCOPE_OBJECT) {
+            assert($var->extra instanceof Operand\Literal);
+            return Type::fromDecl($var->extra->value);
+        } elseif ($resolved->contains($var)) {
+            $type = $resolved[$var];
+            if ($type->type === Type::TYPE_OBJECT) {
+                return $type;
+            }
+        }
+        // We don't know the type
+        return false;
+    }
+
+    protected function processAssertion(Assertion $assertion, Operand $source, \SplObjectStorage $resolved) {
+        if ($assertion instanceof Assertion\TypeAssertion) {
+            $tmp = $this->processTypeAssertion($assertion, $source, $resolved);
+            if ($tmp) {
+                return $tmp;
+            }
+        } elseif ($assertion instanceof Assertion\NegatedAssertion) {
+            $op = $this->processAssertion($assertion->value[0], $source, $resolved);
+            if ($op instanceof Type) {
+                // negated type assertion
+                if (isset($resolved[$source])) {
+                    return $resolved[$source]->removeType($op);
+                }
+                // Todo, figure out how to wait for resolving
+                return Type::mixed()->removeType($op);
+            }
+        }
+        return false;
+    }
+
+    protected function processTypeAssertion(Assertion\TypeAssertion $assertion, Operand $source, \SplObjectStorage $resolved) {
+        if ($assertion->value instanceof Operand) {
+            if ($assertion->value instanceof Operand\Literal) {
+                return Type::fromDecl($assertion->value->value);
+            }
+            if (isset($resolved[$assertion->value])) {
+                return $resolved[$assertion->value];
+            }
+            return false;
+        }
+        $subTypes = [];
+        foreach ($assertion->value as $sub) {
+            $subTypes[] = $subType = $this->processTypeAssertion($sub, $source, $resolved);
+            if (!$subType) {
+                // Not fully resolved yet
+                return false;
+            }
+        }
+        $type = $assertion->mode === Assertion::MODE_UNION ? Type::TYPE_UNION : Type::TYPE_INTERSECTION;
+        return new Type($type, $subTypes);
+    }
 }

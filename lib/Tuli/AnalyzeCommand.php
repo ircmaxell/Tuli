@@ -156,9 +156,7 @@ class AnalyzeCommand extends Command {
         $declarations = new Visitor\DeclarationFinder;
         $calls = new Visitor\CallFinder;
         $variables = new Visitor\VariableFinder;
-        $dagComputer = new Visitor\VariableDagComputer;
         $traverser->addVisitor(new Visitor\Simplifier);
-        $traverser->addVisitor($dagComputer);
         $traverser->addVisitor($declarations);
         $traverser->addVisitor($calls);
         $traverser->addVisitor($variables);
