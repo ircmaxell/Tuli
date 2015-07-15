@@ -11,18 +11,25 @@ namespace Tuli;
 
 class Type {
     const TYPE_UNKNOWN  = -1;
-    const TYPE_VOID     = 1;
-    const TYPE_LONG     = 2;
-    const TYPE_DOUBLE   = 4;
-    const TYPE_NUMERIC  = 6; // 2 | 4
-    const TYPE_STRING   = 8;
-    const TYPE_BOOLEAN  = 16;
-    const TYPE_NULL     = 32;
-    const TYPE_USER     = 64;
-    const TYPE_ARRAY    = 128;
-    const TYPE_CALLABLE = 256;
-    const TYPE_OBJECT   = 512; // unknown object type
-    const TYPE_MIXED    = 1023; // all others combined
+
+    const TYPE_NULL         = 1;
+    const TYPE_BOOLEAN      = 2;
+    const TYPE_LONG         = 3;
+    const TYPE_DOUBLE       = 4;
+    const TYPE_STRING       = 5;
+    
+    const TYPE_OBJECT       = 6;
+    const TYPE_ARRAY        = 7;
+    const TYPE_CALLABLE     = 8;
+
+    const TYPE_UNION        = 10;
+    const TYPE_INTERSECTION = 11;
+
+    protected static $hasSubtypes = [
+        self::TYPE_ARRAY,
+        self::TYPE_UNION,
+        self::TYPE_INTERSECTION,
+    ];
 
     /**
      * @var int
@@ -33,21 +40,20 @@ class Type {
      */
     public $subTypes = [];
     /**
-     * @var string[]
+     * @var string
      */
-    public $userTypes = [];
+    public $userType = '';
 
     /**
-     * @param int      $type
-     * @param Type[]   $subTypes
-     * @param string[] $userTypes
+     * @param int     $type
+     * @param Type[]  $subTypes
+     * @param ?string $userType
      */
-    public function __construct($type, array $subTypes = [], array $userTypes = []) {
+    public function __construct($type, array $subTypes = [], $userType = null) {
         $this->type = $type;
         $this->subTypes = $subTypes;
-        $this->userTypes = $userTypes;
-        if ($this->userTypes && 0 === ($type & Type::TYPE_USER)) {
-            throw new \RuntimeException("Only user types can have user types");
+        if ($type === self::TYPE_OBJECT) {
+            $this->userType = (string) $userType;
         }
     }
 
@@ -58,16 +64,14 @@ class Type {
      */
     public static function getPrimitives() {
         return [
-            Type::TYPE_VOID     => 'void',
+            Type::TYPE_NULL     => 'null',
+            Type::TYPE_BOOLEAN  => 'bool',
             Type::TYPE_LONG     => 'int',
             Type::TYPE_DOUBLE   => 'float',
             Type::TYPE_STRING   => 'string',
-            Type::TYPE_BOOLEAN  => 'bool',
-            Type::TYPE_NULL     => 'null',
-            Type::TYPE_USER     => '',
+            Type::TYPE_OBJECT   => 'object',
             Type::TYPE_ARRAY    => 'array',
             Type::TYPE_CALLABLE => 'callable',
-            Type::TYPE_OBJECT   => 'object',
         ];
     }
 
@@ -75,72 +79,60 @@ class Type {
      * @return string
      */
     public function __toString() {
+        static $ctr = 0;
+        $ctr++;
         if ($this->type === Type::TYPE_UNKNOWN) {
+            $ctr--;
             return "unknown";
         }
-        $nullable = 0 !== ($this->type & Type::TYPE_NULL) ? '?' : '';
-        switch ($this->type & ~Type::TYPE_NULL) {
-            case Type::TYPE_STRING:
-                return $nullable . 'string';
-            case Type::TYPE_BOOLEAN:
-                return $nullable . 'bool';
-            case Type::TYPE_LONG:
-                return $nullable . 'int';
-            case Type::TYPE_DOUBLE:
-                return $nullable . 'float';
-            case Type::TYPE_UNKNOWN:
-                return $nullable . 'unknown';
-            case Type::TYPE_VOID:
-                return $nullable . 'void';
-            case Type::TYPE_ARRAY:
-                if ($this->subTypes) {
-                    $return = [];
-                    foreach ($this->subTypes as $sub) {
-                        $return[] = $nullable . $sub . '[]';
-                    }
-                    return implode('|', $return);
-                }
-                return $nullable . 'array';
-            case Type::TYPE_OBJECT:
-                return $nullable . 'object';
-            case Type::TYPE_USER:
-                $return = [];
-                foreach ($this->userTypes as $type) {
-                    $return[] = $nullable . $type;
-                }
-                return implode('|', $return);
-            case Type::TYPE_MIXED:
-                return $nullable . 'mixed';
-            case Type::TYPE_CALLABLE:
-                return $nullable . 'callable';
+        $primitives = self::getPrimitives();
+        if (isset($primitives[$this->type])) {
+            $ctr--;
+            if ($this->type === Type::TYPE_OBJECT && $this->userType) {
+                return $this->userType;
+            } elseif ($this->type === Type::TYPE_ARRAY && $this->subTypes) {
+                return $this->subTypes[0] . '[]';
+            }
+            return $primitives[$this->type];
         }
+        if ($this->type === Type::TYPE_UNION) {
+            $value = implode('|', $this->subTypes);
+        } elseif ($this->type === Type::TYPE_INTERSECTION) {
+            $value = implode('&', $this->subTypes);
+        } else {
+            var_dump($this);
+            die("Assertion failure: unknown type: {$this->type}\n");
+        }
+        $ctr--;
+        if ($ctr > 0) {
+            return '(' . $value . ')';
+        }
+        return $value;
+    }
+
+    public function hasSubtypes() {
+        return in_array($this->type, self::$hasSubtypes);
+    }
+
+    public function allowsNull() {
         if ($this->type === Type::TYPE_NULL) {
-            return 'null';
+            return true;
         }
-        $found = 0;
-        $foundStrings = [];
-        foreach (self::getPrimitives() as $primitive => $foundString) {
-            if (0 !== ($primitive & $this->type)) {
-                $found |= $primitive;
-                if ($primitive === Type::TYPE_ARRAY && $this->subTypes) {
-                    foreach ($this->subTypes as $st) {
-                        $foundStrings[] = ($st) . '[]';
-                    }
-                } elseif ($foundString) {
-                    $foundStrings[] = $foundString;
-                } elseif ($primitive === Type::TYPE_USER) {
-                    foreach ($this->userTypes as $ut) {
-                        $foundStrings[] = $ut;
-                    }
+        if ($this->type === Type::TYPE_UNION) {
+            foreach ($this->subTypes as $subType) {
+                if ($subType->allowsNull()) {
+                    return true;
                 }
             }
         }
-        if ($found === $this->type) {
-            return implode('|', $foundStrings);
+        if ($this->type === Type::TYPE_INTERSECTION) {
+            foreach ($this->subTypes as $subType) {
+                if (!$subType->allowsNull()) {
+                    return false;
+                }
+            }
         }
-        var_dump($this->type);
-        throw new \RuntimeException("Unknown type thrown");
-        return "unknown";
+        return false;
     }
 
     /**
@@ -175,6 +167,22 @@ class Type {
         return new Type(Type::TYPE_MIXED);
     }
 
+    public function simplify() {
+        if ($this->type !== Type::TYPE_UNION && $this->type !== Type::TYPE_INTERSECTION) {
+            return $this;
+        }
+        $new = [];
+        foreach ($this->subTypes as $subType) {
+            $subType = $subType->simplify();
+            if ($this->type === $subType->type) {
+                $new = array_merge($new, $subType->subTypes);
+            } else {
+                $new[] = $subType->simplify();
+            }
+        }
+        return (new Type($this->type, $new));
+    }
+
     /**
      * @param string $decl
      *
@@ -193,8 +201,10 @@ class Type {
         } elseif ($decl[0] === '?') {
             $decl = substr($decl, 1);
             $type = Type::fromDecl($decl);
-            $type->type |= Type::TYPE_NULL;
-            return $type;
+            return new Type(Type::TYPE_UNION, [
+                $type,
+                new Type(Type::TYPE_NULL)
+            ]);
         }
         switch (strtolower($decl)) {
             case 'boolean':
@@ -216,32 +226,68 @@ class Type {
             case 'null':
                 return new Type(Type::TYPE_NULL);
         }
-        if (strpos($decl, '|') !== false) {
-            $parts = explode('|', $decl);
-            $allowedTypes = 0;
-            $userTypes = [];
-            $subTypes = [];
-            foreach ($parts as $part) {
-                $type = Type::fromDecl($part);
-                $allowedTypes |= $type->type;
-                $userTypes = array_merge($type->userTypes, $userTypes);
-                $subTypes = array_merge($type->subTypes, $subTypes);
-            }
-            return new Type($allowedTypes, $subTypes, $userTypes);
+        // TODO: parse | and & and ()
+        if (strpos($decl, '|') !== false || strpos($decl, '&') !== false || strpos($decl, '(') !== false) {
+            return self::parseCompexDecl($decl)->simplify();
         }
         if (substr($decl, -2) === '[]') {
             $type = Type::fromDecl(substr($decl, 0, -2));
             return new Type(Type::TYPE_ARRAY, [$type]);
         }
-        if (substr($decl, -2) === '()') {
-            // because some people use array() as a type declaration. sigh
-            return Type::fromDecl(substr($decl, 0, -2));
-        }
         $regex = '(^([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\\\\)*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$)';
         if (!preg_match($regex, $decl)) {
             throw new \RuntimeException("Unknown type declaration found: $decl");
         }
-        return new Type(Type::TYPE_USER, [], [$decl]);
+        return new Type(Type::TYPE_OBJECT, [], $decl);
+    }
+
+    private static function parseCompexDecl($decl) {
+        $left = null;
+        $right = null;
+        $combinator = '';
+        if (substr($decl, 0, 1) === '(') {
+            $regex = '(^(\(((?>[^()]+)|(?1))*\)))';
+            if (preg_match($regex, $decl, $match)) {
+                $sub = $match[0];
+                $left = self::fromDecl(substr($sub, 1, -1));
+                if ($sub === $decl) {
+                    return $left;
+                }
+                $decl = substr($decl, strlen($sub));
+            } else {
+                throw new \RuntimeException("Unmatched braces?");
+            }
+            if (!in_array(substr($decl, 0, 1), ['|', '&'])) {
+                throw new \RuntimeException("Unknown position of combinator: $decl");
+            }
+            $right = self::fromDecl(substr($decl, 1));
+            $combinator = substr($decl, 0, 1);
+        } else {
+            $orPos = strpos($decl, '|');
+            $andPos = strpos($decl, '&');
+            $pos = 0;
+            if ($orPos === false && $andPos !== false) {
+                $pos = $andPos;
+            } elseif ($orPos !== false && $andPos === false) {
+                $pos = $orPos;
+            } elseif ($orPos !== false && $andPos !== false) {
+                $pos = min($orPos, $andPos);
+            } else {
+                throw new \RuntimeException("No combinator found: $decl");
+            }
+            if ($pos === 0) {
+                throw new \RuntimeException("Unknown position of combinator: $decl");
+            }
+            $left = self::fromDecl(substr($decl, 0, $pos));
+            $right = self::fromDecl(substr($decl, $pos + 1));
+            $combinator = substr($decl, $pos, 1);
+        }
+        if ($combinator === '|') {
+            return new Type(Type::TYPE_UNION, [$left, $right]);
+        } elseif ($combinator === '&') {
+            return new Type(Type::TYPE_INTERSECTION, [$left, $right]);
+        }
+        throw new \RuntimeException("Unknown combinator $combinator");
     }
 
     /**
@@ -271,13 +317,12 @@ class Type {
         if ($type->type !== $this->type) {
             return false;
         }
-        if ($type->type === Type::TYPE_ARRAY) {
-            return $this->subTypes === $type->subTypes;
+        if ($type->type === Type::TYPE_OBJECT) {
+            return strtolower($type->userType) === strtolower($this->userType);
         }
-        if ($type->type === Type::TYPE_USER) {
-            $left = array_map('strtolower', $type->userTypes);
-            $right = array_map('strtolower', $this->userTypes);
-            return array_diff($left, $right) === [] && array_diff($right, $left) === [];
+        if (in_array($type->type, self::$hasSubtypes)) {
+            // we need to ensure subtypes are correct as well
+            return $this->subTypes === $type->subTypes;
         }
         return true;
     }
@@ -288,25 +333,7 @@ class Type {
      * @return Type the removed type
      */
     public function removeType(Type $type) {
-        $new = new Type(0);
-        $mask = ~$type->type;
-        if ($this->type & Type::TYPE_USER) {
-            foreach ($this->userTypes as $ut) {
-                $lower = strtolower($ut);
-                foreach ($type->userTypes as $st) {
-                    if (strtolower($st) === $lower) {
-                        continue 2;
-                    }
-                }
-                $mask |= Type::TYPE_USER;
-                $new->userTypes[] = $ut;
-            }
-        }
-        if ($type->type & Type::TYPE_ARRAY) {
-            // Handle the array
-        }
-        $new->type = ($this->type & $mask);
-        return $new;
+        throw new \LogicException('TODO');
     }
 
 }
