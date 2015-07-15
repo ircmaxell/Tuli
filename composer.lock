@@ -1,7 +1,7 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
     "hash": "381c47caaf2028d5ab3f4261a9561da4",
@@ -130,12 +130,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ircmaxell/php-cfg.git",
-                "reference": "baf0316e5d38ccb1b5798c3d2764c4e4e38ea44c"
+                "reference": "559ee75022acb28701798dbcf72bab6bd23d83e1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/baf0316e5d38ccb1b5798c3d2764c4e4e38ea44c",
-                "reference": "baf0316e5d38ccb1b5798c3d2764c4e4e38ea44c",
+                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/559ee75022acb28701798dbcf72bab6bd23d83e1",
+                "reference": "559ee75022acb28701798dbcf72bab6bd23d83e1",
                 "shasum": ""
             },
             "require": {
@@ -164,7 +164,7 @@
                 }
             ],
             "description": "A Control Flow Graph implementation for PHP",
-            "time": "2015-07-14 22:49:38"
+            "time": "2015-07-15 16:52:59"
         },
         {
             "name": "nikic/php-parser",

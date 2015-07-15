@@ -46,22 +46,23 @@ class EndToEndTest extends \PHPUnit_Framework_TestCase {
         $blocks = ["file.php" => $this->parser->parse($code, "file.php")];
         ob_start();
         $actual = $this->analyzer->analyzeGraphs($blocks);
+        $results = [];
+        foreach ($actual as $tmp) {
+            $results[] = [
+                "line"    => $tmp[1]->getLine(),
+                "message" => $tmp[0],
+            ];
+        }
         $output = ob_get_clean();
-        while ($error = array_pop($expected)) {
-            foreach ($actual as $key => $tmp) {
-                if ($tmp[1]->getLine() !== $error['line']) {
-                    continue;
-                }
-                if ($tmp[0] === $error['message']) {
-                    unset($actual[$key]);
-                    continue 2;
-                }
+        $sort = function($a, $b) {
+            if ($a['line'] !== $b['line']) {
+                return $a['line'] - $b['line'];
             }
-            $this->fail("$file: Did not find error in result: " . $error['message'] . " expected on line " . $error['line']);
-        }
-        foreach ($actual as $value) {
-            $this->fail("$file: Unexpected error: " . $value[0] . " on line " . $value[1]->getLine());
-        }
+            return strcmp($a['message'], $b['message']);
+        };
+        usort($expected, $sort);
+        usort($results, $sort);
+        $this->assertEquals($expected, $results);
     }
 
 }

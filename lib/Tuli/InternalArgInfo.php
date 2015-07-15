@@ -4163,7 +4163,7 @@ class InternalArgInfo {
         'microtime'                                                 => ['', 'get_as_float='=>'bool'],
         'mime_content_type'                                         => ['string', 'filename_or_stream'=>''],
         'min 1'                                                     => ['', 'arg1'=>'', 'arg2'=>'', '...='=>''],
-        'min'                                                       => ['', 'arg1'=>'array'],
+        'min'                                                       => ['', 'arg1'=>'array|int'],
         'ming_keypress'                                             => ['int', 'char'=>'string'],
         'ming_setcubicthreshold'                                    => ['', 'threshold'=>'int'],
         'ming_setscale'                                             => ['', 'scale'=>'float'],

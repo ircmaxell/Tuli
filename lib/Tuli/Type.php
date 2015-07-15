@@ -25,24 +25,111 @@ class Type {
     const TYPE_UNION        = 10;
     const TYPE_INTERSECTION = 11;
 
+    /** 
+     * @var int[]
+     */
     protected static $hasSubtypes = [
-        self::TYPE_ARRAY,
-        self::TYPE_UNION,
-        self::TYPE_INTERSECTION,
+        self::TYPE_ARRAY        => self::TYPE_ARRAY,
+        self::TYPE_UNION        => self::TYPE_UNION,
+        self::TYPE_INTERSECTION => self::TYPE_INTERSECTION,
     ];
 
     /**
      * @var int
      */
     public $type = 0;
+
     /**
      * @var Type[]
      */
     public $subTypes = [];
+
     /**
      * @var string
      */
     public $userType = '';
+
+    /**
+     * @var Type[]
+     */
+    private static $typeCache = [];
+
+    /**
+     * @return Type
+     */
+    public static function unknown() {
+        return self::makeCachedType(Type::TYPE_UNKNOWN);
+    }
+    /**
+     * @return Type
+     */
+    public static function int() {
+        return self::makeCachedType(Type::TYPE_LONG);
+    }
+    /**
+     * @return Type
+     */
+    public static function float() {
+        return self::makeCachedType(Type::TYPE_DOUBLE);
+    }
+    /**
+     * @return Type
+     */
+    public static function string() {
+        return self::makeCachedType(Type::TYPE_STRING);
+    }
+    /**
+     * @return Type
+     */
+    public static function bool() {
+        return self::makeCachedType(Type::TYPE_BOOLEAN);
+    }
+    /**
+     * @return Type
+     */
+    public static function null() {
+        return self::makeCachedType(Type::TYPE_NULL);
+    }
+    /**
+     * @return Type
+     */
+    public static function object() {
+        return self::makeCachedType(Type::TYPE_OBJECT);
+    }
+
+    /**
+     * @param int $key
+     *
+     * @return Type
+     */
+    private static function makeCachedType($key) {
+        if (!isset(self::$typeCache[$key])) {
+            self::$typeCache[$key] = new Type($key);
+        }
+        return self::$typeCache[$key];
+    }
+    /**
+     * @return Type
+     */
+    public static function numeric() {
+        if (!isset(self::$typeCache["numeric"])) {
+            self::$typeCache["numeric"] = new Type(Type::TYPE_UNION, [self::int(), self::float()]);
+        }
+        return self::$typeCache["numeric"];
+    }
+    /**
+     * @return Type
+     */
+    public static function mixed() {
+        if (!isset(self::$typeCache["mixed"])) {
+            $subs = [];
+            foreach (self::getPrimitives() as $key => $name) {
+                $subs[] = self::makeCachedType($key);
+            }
+            self::$typeCache["mixed"] = new Type(Type::TYPE_UNION, $subs);
+        }
+        return self::$typeCache["mixed"];
+    }
 
     /**
      * @param int     $type
@@ -51,9 +138,15 @@ class Type {
      */
     public function __construct($type, array $subTypes = [], $userType = null) {
         $this->type = $type;
-        $this->subTypes = $subTypes;
         if ($type === self::TYPE_OBJECT) {
             $this->userType = (string) $userType;
+        } elseif (isset(self::$hasSubtypes[$type])) {
+            $this->subTypes = $subTypes;
+            foreach ($subTypes as $sub) {
+                if (!$sub instanceof Type) {
+                    throw new \RuntimeException("Sub types must implement Type");
+                }
+            }
         }
     }
 
@@ -95,13 +188,13 @@ class Type {
             }
             return $primitives[$this->type];
         }
+        $value = '';
         if ($this->type === Type::TYPE_UNION) {
             $value = implode('|', $this->subTypes);
         } elseif ($this->type === Type::TYPE_INTERSECTION) {
             $value = implode('&', $this->subTypes);
         } else {
-            var_dump($this);
-            die("Assertion failure: unknown type: {$this->type}\n");
+            throw new \RuntimeException("Assertion failure: unknown type {$this->type}");
         }
         $ctr--;
         if ($ctr > 0) {
@@ -164,9 +257,12 @@ class Type {
                 }
                 break;
         }
-        return new Type(Type::TYPE_MIXED);
+        return self::mixed();
     }
 
+    /**
+     * @return Type
+     */
     public function simplify() {
         if ($this->type !== Type::TYPE_UNION && $this->type !== Type::TYPE_INTERSECTION) {
             return $this;
@@ -180,6 +276,7 @@ class Type {
                 $new[] = $subType->simplify();
             }
         }
+        // TODO: compute redundant unions
         return (new Type($this->type, $new));
     }
 
@@ -201,10 +298,10 @@ class Type {
         } elseif ($decl[0] === '?') {
             $decl = substr($decl, 1);
             $type = Type::fromDecl($decl);
-            return new Type(Type::TYPE_UNION, [
+            return (new Type(Type::TYPE_UNION, [
                 $type,
                 new Type(Type::TYPE_NULL)
-            ]);
+            ]))->simplify();
         }
         switch (strtolower($decl)) {
             case 'boolean':
@@ -225,6 +322,8 @@ class Type {
                 return new Type(Type::TYPE_CALLABLE);
             case 'null':
                 return new Type(Type::TYPE_NULL);
+            case 'numeric':
+                return Type::fromDecl('int|float');
         }
         // TODO: parse | and & and ()
         if (strpos($decl, '|') !== false || strpos($decl, '&') !== false || strpos($decl, '(') !== false) {
@@ -241,14 +340,20 @@ class Type {
         return new Type(Type::TYPE_OBJECT, [], $decl);
     }
 
+    /**
+     * @param string $decl
+     *
+     * @return Type
+     */
     private static function parseCompexDecl($decl) {
         $left = null;
         $right = null;
         $combinator = '';
         if (substr($decl, 0, 1) === '(') {
             $regex = '(^(\(((?>[^()]+)|(?1))*\)))';
+            $match = [];
             if (preg_match($regex, $decl, $match)) {
-                $sub = $match[0];
+                $sub = (string) $match[0];
                 $left = self::fromDecl(substr($sub, 1, -1));
                 if ($sub === $decl) {
                     return $left;
@@ -314,15 +419,33 @@ class Type {
      * @return bool The status
      */
     public function equals(Type $type) {
+        if ($type === $this) {
+            return true;
+        }
         if ($type->type !== $this->type) {
             return false;
         }
         if ($type->type === Type::TYPE_OBJECT) {
             return strtolower($type->userType) === strtolower($this->userType);
         }
-        if (in_array($type->type, self::$hasSubtypes)) {
-            // we need to ensure subtypes are correct as well
-            return $this->subTypes === $type->subTypes;
+        // TODO: handle sub types
+        if (isset(self::$hasSubtypes[$this->type]) && isset(self::$hasSubtypes[$type->type])) {
+            if (count($this->subTypes) !== count($type->subTypes)) {
+                return false;
+            }
+            // compare 
+            $other = $type->subTypes;
+            foreach ($this->subTypes as $st1) {
+                foreach ($other as $key => $st2) {
+                    if ($st1->equals($st2)) {
+                        unset($other[$key]);
+                        continue 2;
+                    }
+                    // We have a subtype that's not equal
+                    return false;
+                }
+            }
+            return empty($other);
         }
         return true;
     }
@@ -333,7 +456,25 @@ class Type {
      * @return Type the removed type
      */
     public function removeType(Type $type) {
-        throw new \LogicException('TODO');
+        if (!isset(self::$hasSubtypes[$this->type])) {
+            if ($this->equals($type)) {
+                // left with an unknown type
+                return Type::null();
+            }
+            return $this;
+        }
+        $new = [];
+        foreach ($this->subTypes as $key => $st) {
+            if (!$st->equals($type)) {
+                $new[] = $st;
+            }
+        }
+        if (empty($new)) {
+            throw new \LogicException('Unknown type encountered');
+        } elseif (count($new) === 1) {
+            return $new[0];
+        }
+        return new Type($this->type, $new);
     }
 
 }

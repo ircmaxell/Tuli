@@ -13,15 +13,11 @@ class TypeResolver {
     
     protected $components;
 
+    protected $callableUnion;
+
     public function __construct(array $components) {
         $this->components = $components;
-    }
-
-    public function allowsNull(Type $type) {
-        if (($type->type & Type::TYPE_NULL) !== 0) {
-            return true;
-        }
-        return false;
+        $this->callableUnion = Type::fromDecl("string|array|object");
     }
 
     public function resolves(Type $a, Type $b) {
@@ -29,31 +25,70 @@ class TypeResolver {
             return true;
         }
         if ($b->type === Type::TYPE_CALLABLE) {
-            // TODO: do a true callable check
-            // Callable is hard to do statically... 
-            return true;
+            return $this->resolves($a, $this->callableUnion);
+        }
+        if ($a->type === Type::TYPE_OBJECT && $b->type === Type::TYPE_OBJECT) {
+            return $this->checkUserTypes($a->userType, $b->userType);
         }
         if ($a->type === Type::TYPE_LONG && $b->type === Type::TYPE_DOUBLE) {
             return true;
         }
-        if ($a->type === Type::TYPE_USER && $b->type === Type::TYPE_USER) {
-            foreach ($b->userTypes as $bt) {
-                $bt = strtolower($bt);
-                foreach ($a->userTypes as $at) {
-                    $at = strtolower($at);
-                    if (!isset($this->components['resolves'][$bt][$at])) {
-                        continue 2;
-                    }
-                }
-                // We got here, means we found an B type that's resolved by all A types
+        if ($a->type === Type::TYPE_ARRAY && $b->type === Type::TYPE_ARRAY) {
+            if (!$b->subTypes) {
                 return true;
             }
-            // That means there is no A type that fully resolves at least one B type
-            return false;
+            if (!$a->subTypes) {
+                // We need a specific array
+                return false;
+            }
+            return ($this->resolves($a->subTypes[0], $b->subTypes[0]));
         }
-        if (($b->type & $a->type) === $a->type) {
+        if ($a->type === Type::TYPE_UNION) {
+            foreach ($a->subTypes as $st) {
+                if ($this->resolves($st, $b)) {
+                    // All must resolve
+                    return false;
+                }
+            }
             return true;
         }
+        if ($a->type === Type::TYPE_INTERSECTION) {
+            foreach ($a->subTypes as $st) {
+                if ($this->resolves($st, $b)) {
+                    // At least one resolves it
+                    return true;
+                }
+            }
+            return false;
+        }
+        if ($b->type === Type::TYPE_UNION) {
+            foreach ($b->subTypes as $st) {
+                if ($this->resolves($a, $st)) {
+                    // At least one resolves it
+                    return true;
+                }
+            }
+            return false;
+        }
+        if ($b->type === Type::TYPE_INTERSECTION) {
+            foreach ($b->subTypes as $st) {
+                if (!$this->resolves($a, $st)) {
+                    // At least one resolves it
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private function checkUserTypes($a, $b) {
+        $a = strtolower($a);
+        $b = strtolower($b);
+        if (isset($this->components['resolves'][$b][$a])) {
+            return true;
+        }
+        // TODO: take care of internal types
         return false;
     }
 

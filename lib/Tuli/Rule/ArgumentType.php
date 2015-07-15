@@ -41,25 +41,23 @@ class ArgumentType implements Rule {
                 // Variable method call
                 continue;
             }
-            if ($call->var->type->type !== Type::TYPE_USER) {
+            if ($call->var->type->type !== Type::TYPE_OBJECT) {
                 // We don't know the type
                 continue;
             }
-            foreach ($call->var->type->userTypes as $ut) {
-                $name = strtolower($ut);
-                if (!isset($components['resolves'][$name])) {
-                    // Could not find class
+            $name = strtolower($call->var->type->userType);
+            if (!isset($components['resolves'][$name])) {
+                // Could not find class
+                continue;
+            }
+            foreach ($components['resolves'][$name] as $cn => $class) {
+                // For every possible class that can resolve the type
+                $method = $this->findMethod($class, $name);
+                if (!$method) {
+                    // Class does not *directly* implement method
                     continue;
                 }
-                foreach ($components['resolves'][$name] as $cn => $class) {
-                    // For every possible class that can resolve the type
-                    $method = $this->findMethod($class, $name);
-                    if (!$method) {
-                        // Class does not *directly* implement method
-                        continue;
-                    }
-                    $errors = array_merge($errors, $this->verifyCall($method, $call, $components, $cn . "->" . $name));
-                }
+                $errors = array_merge($errors, $this->verifyCall($method, $call, $components, $cn . "->" . $name));
             }
         }
         return $errors;
@@ -93,7 +91,7 @@ class ArgumentType implements Rule {
                 $type = Type::fromDecl($param->type->value);
             } else {
                 $type = Type::extractTypeFromComment("param", $param->function->getAttribute('doccomment'), $param->name->value);
-                if ($type->type === Type::TYPE_MIXED) {
+                if (Type::mixed()->equals($type)) {
                     continue;
                 }
             }

@@ -41,7 +41,7 @@ class ReturnType implements Rule {
             $type = Type::fromDecl($function->returnType->value);
         } else {
             $type = Type::extractTypeFromComment("return", $function->getAttribute('doccomment'));
-            if ($type->type === Type::TYPE_MIXED) {
+            if (Type::mixed()->equals($type)) {
                 // only verify actual types
                 return $errors;
             }
@@ -50,7 +50,7 @@ class ReturnType implements Rule {
         foreach ($returns as $return) {
             if (!$return || !$return->expr) {
                 // Default return, no
-                if ($components['typeResolver']->allowsNull($type)) {
+                if ($type->allowsNull()) {
                     continue;
                 }
                 if (!$return) {

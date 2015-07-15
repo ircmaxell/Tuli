@@ -27,11 +27,11 @@ return [
     [
         [
             "line"    => 8,
-            "message" => "Type mismatch on foo() argument 0, found float expecting int|string",
+            "message" => "Type mismatch on foo() argument 0, found float expecting string|int",
         ],
         [
             "line"    => 11,
-            "message" => "Type mismatch on foo() argument 0, found int[] expecting int|string",
+            "message" => "Type mismatch on foo() argument 0, found int[] expecting string|int",
         ],
         
     ]

@@ -22,31 +22,29 @@ class ConstructorType extends ArgumentType {
     public function execute(array $components) {
         $errors = [];
         foreach ($components['newCalls'] as $new) {
-            $types = [];
+            $type = null;
             if ($new->class instanceof Operand\Literal) {
-                $types[] = $new->class->value;
-            } elseif ($new->class->type->type !== Type::TYPE_USER) {
+                $type = $new->class->value;
+            } elseif ($new->class->type->type !== Type::TYPE_OBJECT) {
                 $errors[] = ["Unknown class type for new call", $new];
                 continue;
             } else {
-                $types = $new->class->type->userTypes;
+                $type = $new->class->type->userType;
             }
-            foreach ($types as $type) {
-                $name = strtolower($type);
-                if (!isset($components['resolves'][$name])) {
-                    if (isset($components['internalTypeInfo']->methods[$name])) {
-                        // TODO
-                    } else {
-                        $errors[] = ["Could not find class definition for $type", $new];
-                    }
-                    continue;
+            $name = strtolower($type);
+            if (!isset($components['resolves'][$name])) {
+                if (isset($components['internalTypeInfo']->methods[$name])) {
+                    // TODO
+                } else {
+                    $errors[] = ["Could not find class definition for $type", $new];
                 }
-                foreach ($components['resolves'][$name] as $sub => $class) {
-                    $constructor = $this->findConstructor($class);
-                    if ($constructor) {
-                        // validate parameters!!!
-                        $errors = array_merge($errors, $this->verifyCall($constructor, $new, $components, "{$class->name->value}::__construct"));
-                    }
+                continue;
+            }
+            foreach ($components['resolves'][$name] as $sub => $class) {
+                $constructor = $this->findConstructor($class);
+                if ($constructor) {
+                    // validate parameters!!!
+                    $errors = array_merge($errors, $this->verifyCall($constructor, $new, $components, "{$class->name->value}::__construct"));
                 }
             }
         }
