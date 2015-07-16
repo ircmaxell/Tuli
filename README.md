@@ -1,4 +1,4 @@
-![Build Status](https://travis-ci.org/ircmaxell/Tuli.svg)
+[![Build Status](https://travis-ci.org/ircmaxell/Tuli.svg)](https://travis-ci.org/ircmaxell/Tuli)
 
 ## A static analysis engine...
 

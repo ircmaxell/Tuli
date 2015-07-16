@@ -9,11 +9,11 @@
 
 namespace Tuli\Command;
 
+use PHPCfg\Printer;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Tuli\Command;
-use Tuli\Printer;
 
 class PrintVars extends Command {
 
@@ -22,11 +22,11 @@ class PrintVars extends Command {
         $this->setName('print-vars')
             ->setDescription('Print the CFG Variables')
             ->addOption('image', 'i', InputOption::VALUE_REQUIRED, "filename to generate as image", '');
-
     }
 
     protected function execute(InputInterface $input, OutputInterface $output) {
         $components = parent::execute($input, $output);
+        $image = $input->getOption("image");
         if ($image) {
             $parts = explode('.', $image);
             (new Printer\GraphViz)->printVars($components['cfg'])->export(end($parts), $image);

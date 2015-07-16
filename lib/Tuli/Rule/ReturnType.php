@@ -20,6 +20,11 @@ class ReturnType implements Rule {
         return "Function and Method Return Types";
     }
 
+    /**
+     * @param array $components
+     *
+     * @return array
+     */
     public function execute(array $components) {
         $errors = [];
         foreach ($components['functions'] as $function) {

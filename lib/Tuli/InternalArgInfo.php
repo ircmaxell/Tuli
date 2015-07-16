@@ -10,6 +10,9 @@
 namespace Tuli;
 
 class InternalArgInfo {
+    /**
+     * @var string[][]
+     */
     private $info = [
         'abs'                                                       => ['int|float', 'number'=>'int|float'],
         'accelerator_get_configuration'                             => ['array'],
@@ -8498,7 +8501,13 @@ class InternalArgInfo {
         'zlib_get_coding_type'                                      => ['string'],
     ];
 
+    /**
+     * @var array
+     */
     public $functions = [];
+    /**
+     * @var array
+     */
     public $methods = [];
 
     public function __construct() {
@@ -8521,6 +8530,11 @@ class InternalArgInfo {
         $this->loadReflectables();
     }
 
+    /**
+     * @var array
+     *
+     * @return array
+     */
     protected function parseInfo(array $info) {
         $return = array_shift($info);
         $params = [];

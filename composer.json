@@ -25,5 +25,12 @@
     },
     "bin": [
         "bin/tuli"
+    ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/ircmaxell/GraphViz"
+        }
     ]
+
 }

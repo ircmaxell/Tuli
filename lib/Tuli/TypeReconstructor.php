@@ -312,10 +312,10 @@ class TypeReconstructor {
             case 'Expr_StaticPropertyFetch':
                 if (!$op->name instanceof Operand\Literal) {
                     // variable property fetch
-                    return Type::mixed();
+                    return [Type::mixed()];
                 }
                 $propName = $op->name->value;
-                if ($op instanceof Expr\PropertyFetch) {
+                if ($op instanceof Op\Expr\StaticPropertyFetch) {
                     $objType = $this->getClassType($op->class, $resolved);
                 } else {
                     $objType = $this->getClassType($op->var, $resolved);
@@ -517,7 +517,7 @@ class TypeReconstructor {
      * @param Type   $objType
      * @param string $propName
      *
-     * @return Type[]|null
+     * @return Type[]|false
      */
     private function resolveProperty(Type $objType, $propName) {
         if ($objType->type === Type::TYPE_OBJECT) {

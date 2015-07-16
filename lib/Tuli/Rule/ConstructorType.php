@@ -19,6 +19,11 @@ class ConstructorType extends ArgumentType {
         return "Constructor Argument Types";
     }
 
+    /**
+     * @param array $components
+     *
+     * @return array
+     */
     public function execute(array $components) {
         $errors = [];
         foreach ($components['newCalls'] as $new) {

@@ -16,10 +16,18 @@ use Tuli\Type;
 
 class ArgumentType implements Rule {
     
+    /**
+     * @return string
+     */
     public function getName() {
         return "Function and Method Call Argument Types";
     }
 
+    /**
+     * @param array $components
+     *
+     * @return array
+     */
     public function execute(array $components) {
         $errors = [];
         foreach ($components['functionLookup'] as $name => $functions) {
@@ -63,6 +71,9 @@ class ArgumentType implements Rule {
         return $errors;
     }
 
+    /**
+     * @return Op\Stmt\ClassMethod|null
+     */
     protected function findMethod($class, $name) {
         foreach ($class->stmts->children as $stmt) {
             if ($stmt instanceof Op\Stmt\ClassMethod) {
@@ -77,7 +88,9 @@ class ArgumentType implements Rule {
         return null;
     }
 
-
+    /**
+     * @return array
+     */
     protected function verifyCall($func, $call, $components, $name) {
         $errors = [];
         foreach ($func->params as $idx => $param) {
@@ -102,6 +115,9 @@ class ArgumentType implements Rule {
         return $errors;
     }
 
+    /**
+     * @return array
+     */
     protected function verifyInternalCall($func, $call, $components, $name) {
         $errors = [];
         foreach ($func['params'] as $idx => $param) {

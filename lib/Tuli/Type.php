@@ -306,6 +306,8 @@ class Type {
         switch (strtolower($decl)) {
             case 'boolean':
             case 'bool':
+            case 'false':
+            case 'true':
                 return new Type(Type::TYPE_BOOLEAN);
             case 'integer':
             case 'int':

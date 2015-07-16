@@ -11,6 +11,11 @@ namespace Tuli;
 
 interface Rule {
     
+    /**
+     * @param array $components
+     *
+     * @return array
+     */
     public function execute(array $components);
     public function getName();
 
