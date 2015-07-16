@@ -10,20 +10,18 @@
 namespace Tuli;
 
 use PHPCfg\Block;
-use PHPCfg\Dumper;
-use PHPCfg\Op;
 use PHPCfg\Operand;
 use PHPCfg\Parser as CFGParser;
 use PHPCfg\Traverser;
 use PHPCfg\Visitor;
 use PhpParser\ParserFactory;
-use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Command\Command as CoreCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class AnalyzeCommand extends Command {
+abstract class Command extends CoreCommand {
 
     /**
      * @var string[]
@@ -51,38 +49,15 @@ class AnalyzeCommand extends Command {
         'xsd',
     ];
 
-    /**
-     * @var Tuli\Rule[]
-     */
-    protected $rules = [];
-
     protected function configure() {
-        $this->setName('analyze')
-            ->setDescription('Analyze the provided files')
-            ->addOption('exclude', 'x', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, "Extensions To Exclude?", $this->defaultSkipExtensions)
-            ->addOption('dump', 'd', InputOption::VALUE_NONE, "Dump the graph", null)
+        $this->addOption('exclude', 'x', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, "Extensions To Exclude?", $this->defaultSkipExtensions)
             ->addArgument('files', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'The files to analyze');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output) {
-        $this->loadRules();
         $parser = new CFGParser((new ParserFactory)->create(ParserFactory::PREFER_PHP7));
         $graphs = $this->getGraphsFromFiles($input->getArgument('files'), $input->getOption("exclude"), $parser);
-        $errors = $this->analyzeGraphs($graphs);
-        if ($input->getOption('dump')) {
-            $dumper = new Dumper;
-            foreach ($graphs as $key => $graph) {
-                echo "Graph #$key\n";
-                echo $dumper->dump($graph);
-                echo "\n";
-            }
-        }
-        if ($errors) {
-            echo "\nErrors found (" . count($errors) . "):\n";
-            foreach ($errors as $error) {
-                $this->emitError($error[0], $error[1]);
-            }
-        }
+        return $this->analyzeGraphs($graphs);
     }
 
     public function analyzeGraphs(array $graphs) {
@@ -93,19 +68,8 @@ class AnalyzeCommand extends Command {
         echo "Determining Variable Types\n";
         $typeReconstructor = new TypeReconstructor;
         $typeReconstructor->resolve($components);
-
-        $errors = [];
-        foreach ($this->rules as $rule) {
-            echo "Executing rule: " . $rule->getName() . "\n";
-            $errors = array_merge($errors, $rule->execute($components));
-        }
-        return $errors;
-    }
-
-    public function loadRules() {
-        $this->rules[] = new Rule\ArgumentType;
-        $this->rules[] = new Rule\ReturnType;
-        $this->rules[] = new Rule\ConstructorType;
+        return $components;
+        
     }
 
     protected function getGraphsFromFiles(array $files, array $exclude, CFGParser $parser) {
@@ -308,13 +272,6 @@ class AnalyzeCommand extends Command {
             }
         }
         return $result;
-    }
-
-    protected function emitError($msg, Op $op) {
-        echo $msg;
-        echo " ";
-        echo $op->getFile() . ":" . $op->getLine();
-        echo "\n";
     }
 
 }

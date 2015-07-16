@@ -20,6 +20,8 @@ if (!$found) {
 }
 
 $app = new \Cilex\Application("Tuli");
-$app->command(new \Tuli\AnalyzeCommand);
+$app->command(new \Tuli\Command\Analyze);
+$app->command(new \Tuli\Command\PrintCFG);
+$app->command(new \Tuli\Command\PrintVars);
 $app->run();
 

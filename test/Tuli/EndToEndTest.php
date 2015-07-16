@@ -34,7 +34,7 @@ class EndToEndTest extends \PHPUnit_Framework_TestCase {
     private $parser;
 
     public function setUp() {
-        $this->analyzer = new AnalyzeCommand;
+        $this->analyzer = new Command\Analyze;
         $this->analyzer->loadRules();
         $this->parser = new CFGParser((new ParserFactory)->create(ParserFactory::PREFER_PHP7));
     }
@@ -45,9 +45,17 @@ class EndToEndTest extends \PHPUnit_Framework_TestCase {
     public function testDecl($file, $code, $expected) {
         $blocks = ["file.php" => $this->parser->parse($code, "file.php")];
         ob_start();
-        $actual = $this->analyzer->analyzeGraphs($blocks);
+        $components = $this->analyzer->analyzeGraphs($blocks);
+        $rules = [];
+        $rules[] = new Rule\ArgumentType;
+        $rules[] = new Rule\ReturnType;
+        $rules[] = new Rule\ConstructorType;
+        $errors = [];
+        foreach ($rules as $rule) {
+            $errors = array_merge($errors, $rule->execute($components));
+        }
         $results = [];
-        foreach ($actual as $tmp) {
+        foreach ($errors as $tmp) {
             $results[] = [
                 "line"    => $tmp[1]->getLine(),
                 "message" => $tmp[0],
