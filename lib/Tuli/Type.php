@@ -323,6 +323,7 @@ class Type {
             case 'callable':
                 return new Type(Type::TYPE_CALLABLE);
             case 'null':
+            case 'void':
                 return new Type(Type::TYPE_NULL);
             case 'numeric':
                 return Type::fromDecl('int|float');
