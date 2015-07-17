@@ -597,10 +597,10 @@ class TypeReconstructor {
                 } else {
                     $decl = Type::fromDecl($method->returnType->value);
                     if ($this->components['typeResolver']->resolves($doc, $decl)) {
-                    	// doc is a subset
-                    	$types[] = $doc; 
+                        // doc is a subset
+                        $types[] = $doc;
                     } else {
-                    	$types[] = $decl;
+                        $types[] = $decl;
                     }
                 }
             }
