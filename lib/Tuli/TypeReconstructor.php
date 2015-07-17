@@ -590,11 +590,18 @@ class TypeReconstructor {
                 if (!$method) {
                     continue;
                 }
+                $doc = Type::extractTypeFromComment("return", $method->getAttribute('doccomment'));
 
                 if (!$method->returnType) {
-                    $types[] = Type::extractTypeFromComment("return", $method->getAttribute('doccomment'));
+                    $types[] = $doc;
                 } else {
-                    $types[] = Type::fromDecl($method->returnType->value);
+                    $decl = Type::fromDecl($method->returnType->value);
+                    if ($this->components['typeResolver']->resolves($doc, $decl)) {
+                    	// doc is a subset
+                    	$types[] = $doc; 
+                    } else {
+                    	$types[] = $decl;
+                    }
                 }
             }
             if (!empty($types)) {
