@@ -17,7 +17,7 @@ class TypeResolver {
 
     public function __construct(array $components) {
         $this->components = $components;
-        $this->callableUnion = Type::fromDecl("string|array|object");
+        $this->callableUnion = Type::fromDecl("string|array|object|Closure");
     }
 
     public function resolves(Type $a, Type $b) {
