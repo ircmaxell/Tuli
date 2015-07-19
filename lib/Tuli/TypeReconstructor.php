@@ -222,11 +222,11 @@ class TypeReconstructor {
                             }
                             return [new Type(Type::TYPE_ARRAY)];
                         default:
+                            return [Type::mixed()];
                             throw new \RuntimeException("Math op on unknown types {$resolved[$op->left]} + {$resolved[$op->right]}");
                     }
                 }
-
-                break;
+                return false;
             case 'Expr_BinaryOp_Concat':
             case 'Expr_Cast_String':
             case 'Expr_ConcatList':
