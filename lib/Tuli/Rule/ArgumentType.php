@@ -49,7 +49,7 @@ class ArgumentType implements Rule {
                 // Variable method call
                 continue;
             }
-            if ($call->var->type->type !== Type::TYPE_OBJECT) {
+            if (!$call->var->type || $call->var->type->type !== Type::TYPE_OBJECT) {
                 // We don't know the type
                 continue;
             }
@@ -127,7 +127,7 @@ class ArgumentType implements Rule {
                 }
                 continue;
             }
-            if ($param['type']) {
+            if ($param['type'] && isset($call->args[$idx]->type)) {
                 $type = Type::fromDecl($param['type']);
                 if (is_string($call->args[$idx]->type)) {
                     $call->args[$idx]->type = Type::fromDecl($call->args[$idx]->type);
