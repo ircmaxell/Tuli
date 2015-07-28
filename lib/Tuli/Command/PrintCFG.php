@@ -25,13 +25,13 @@ class PrintCFG extends Command {
     }
 
     protected function execute(InputInterface $input, OutputInterface $output) {
-        $components = parent::execute($input, $output);
+        $state = parent::execute($input, $output);
         $image = $input->getOption("image");
         if ($image) {
             $parts = explode('.', $image);
-            (new Printer\GraphViz)->printCfg($components['cfg'])->export(end($parts), $image);
+            (new Printer\GraphViz)->printCfg($state->blocks)->export(end($parts), $image);
         } else {
-            echo (new Printer\Text)->printCfg($components['cfg']);
+            echo (new Printer\Text)->printCfg($state->blocks);
         }
     }
  

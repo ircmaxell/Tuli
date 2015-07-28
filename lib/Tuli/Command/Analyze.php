@@ -29,12 +29,12 @@ class Analyze extends Command {
     }
 
     protected function execute(InputInterface $input, OutputInterface $output) {
-        $components = parent::execute($input, $output);
+        $state = parent::execute($input, $output);
         $this->loadRules();
         $errors = [];
         foreach ($this->rules as $rule) {
             echo "Executing rule: " . $rule->getName() . "\n";
-            $errors = array_merge($errors, $rule->execute($components));
+            $errors = array_merge($errors, $rule->execute($state));
         }
         foreach ($errors as $error) {
             $this->emitError($error[0], $error[1]);
