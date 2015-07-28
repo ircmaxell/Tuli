@@ -11,7 +11,9 @@ namespace Tuli\Rule;
 
 use PHPCfg\Op;
 use PHPCfg\Operand;
-use Tuli\Type;
+use PHPTypes\Type;
+use PHPTypes\State;
+
 
 class ConstructorType extends ArgumentType {
     
@@ -20,13 +22,13 @@ class ConstructorType extends ArgumentType {
     }
 
     /**
-     * @param array $components
+     * @param State $state
      *
      * @return array
      */
-    public function execute(array $components) {
+    public function execute(State $state) {
         $errors = [];
-        foreach ($components['newCalls'] as $new) {
+        foreach ($state->newCalls as $new) {
             $type = null;
             if ($new->class instanceof Operand\Literal) {
                 $type = $new->class->value;
@@ -37,19 +39,19 @@ class ConstructorType extends ArgumentType {
                 $type = $new->class->type->userType;
             }
             $name = strtolower($type);
-            if (!isset($components['resolves'][$name])) {
-                if (isset($components['internalTypeInfo']->methods[$name])) {
+            if (!isset($state->classResolves[$name])) {
+                if (isset($state->internalTypeInfo->methods[$name])) {
                     // TODO
                 } else {
                     $errors[] = ["Could not find class definition for $type", $new];
                 }
                 continue;
             }
-            foreach ($components['resolves'][$name] as $sub => $class) {
+            foreach ($state->classResolves[$name] as $sub => $class) {
                 $constructor = $this->findConstructor($class);
                 if ($constructor) {
                     // validate parameters!!!
-                    $errors = array_merge($errors, $this->verifyCall($constructor, $new, $components, "{$class->name->value}::__construct"));
+                    $errors = array_merge($errors, $this->verifyCall($constructor, $new, $state, "{$class->name->value}::__construct"));
                 }
             }
         }

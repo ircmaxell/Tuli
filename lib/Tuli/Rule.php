@@ -9,14 +9,16 @@
 
 namespace Tuli;
 
+use PHPTypes\State;
+
 interface Rule {
     
     /**
-     * @param array $components
+     * @param State $state
      *
      * @return array
      */
-    public function execute(array $components);
+    public function execute(State $state);
     public function getName();
 
 }

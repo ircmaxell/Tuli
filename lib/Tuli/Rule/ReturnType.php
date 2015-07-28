@@ -12,7 +12,8 @@ namespace Tuli\Rule;
 use PHPCfg\Block;
 use PHPCfg\Op;
 use Tuli\Rule;
-use Tuli\Type;
+use PHPTypes\Type;
+use PHPTypes\State;
 
 class ReturnType implements Rule {
     
@@ -21,22 +22,22 @@ class ReturnType implements Rule {
     }
 
     /**
-     * @param array $components
+     * @param State $state
      *
      * @return array
      */
-    public function execute(array $components) {
+    public function execute(State $state) {
         $errors = [];
-        foreach ($components['functions'] as $function) {
-            $errors = array_merge($errors, $this->verifyReturn($function, $components));
+        foreach ($state->functions as $function) {
+            $errors = array_merge($errors, $this->verifyReturn($function, $state));
         }
-        foreach ($components['methods'] as $method) {
-            $errors = array_merge($errors, $this->verifyReturn($method, $components));
+        foreach ($state->methods as $method) {
+            $errors = array_merge($errors, $this->verifyReturn($method, $state));
         }
         return $errors;
     }
 
-    protected function verifyReturn($function, array $components) {
+    protected function verifyReturn($function, State $state) {
         if (!$function->stmts) {
             // interface
             return [];
@@ -67,7 +68,7 @@ class ReturnType implements Rule {
                 var_dump($return->expr);
                 $errors[] = ["Could not resolve type for return", $return];
             } else {
-                if (!$components['typeResolver']->resolves($return->expr->type, $type)) {
+                if (!$state->resolver->resolves($return->expr->type, $type)) {
                     $errors[] = ["Type mismatch on return value, found {$return->expr->type} expecting {$type}", $return];
                 }
             }

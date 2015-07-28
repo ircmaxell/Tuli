@@ -12,7 +12,8 @@ namespace Tuli\Rule;
 use PHPCfg\Op;
 use PHPCfg\Operand;
 use Tuli\Rule;
-use Tuli\Type;
+use PHPTypes\Type;
+use PHPTypes\State;
 
 class ArgumentType implements Rule {
     
@@ -24,27 +25,27 @@ class ArgumentType implements Rule {
     }
 
     /**
-     * @param array $components
+     * @param State $state
      *
      * @return array
      */
-    public function execute(array $components) {
+    public function execute(State $state) {
         $errors = [];
-        foreach ($components['functionLookup'] as $name => $functions) {
-            $calls = $components['callResolver']->getCallsForFunction($name);
+        foreach ($state->functionLookup as $name => $functions) {
+            $calls = $state->callFinder->getCallsForFunction($name);
             foreach ($functions as $func) {
                 foreach ($calls as $call) {
-                    $errors = array_merge($errors, $this->verifyCall($func, $call[0], $components, $name));
+                    $errors = array_merge($errors, $this->verifyCall($func, $call[0], $state, $name));
                 }
             }
         }
-        foreach ($components['internalTypeInfo']->functions as $name => $arginfo) {
-            $calls = $components['callResolver']->getCallsForFunction($name);
+        foreach ($state->internalTypeInfo->functions as $name => $arginfo) {
+            $calls = $state->callFinder->getCallsForFunction($name);
             foreach ($calls as $call) {
-                $errors = array_merge($errors, $this->verifyInternalCall($arginfo, $call[0], $components, $name));
+                $errors = array_merge($errors, $this->verifyInternalCall($arginfo, $call[0], $state, $name));
             }
         }
-        foreach ($components['methodCalls'] as $call) {
+        foreach ($state->methodCalls as $call) {
             if (!$call->name instanceof Operand\Literal) {
                 // Variable method call
                 continue;
@@ -54,18 +55,18 @@ class ArgumentType implements Rule {
                 continue;
             }
             $name = strtolower($call->var->type->userType);
-            if (!isset($components['resolves'][$name])) {
+            if (!isset($state->classResolves[$name])) {
                 // Could not find class
                 continue;
             }
-            foreach ($components['resolves'][$name] as $cn => $class) {
+            foreach ($state->classResolves[$name] as $cn => $class) {
                 // For every possible class that can resolve the type
                 $method = $this->findMethod($class, $name);
                 if (!$method) {
                     // Class does not *directly* implement method
                     continue;
                 }
-                $errors = array_merge($errors, $this->verifyCall($method, $call, $components, $cn . "->" . $name));
+                $errors = array_merge($errors, $this->verifyCall($method, $call, $state, $cn . "->" . $name));
             }
         }
         return $errors;
@@ -91,7 +92,7 @@ class ArgumentType implements Rule {
     /**
      * @return array
      */
-    protected function verifyCall($func, $call, $components, $name) {
+    protected function verifyCall($func, $call, $state, $name) {
         $errors = [];
         foreach ($func->params as $idx => $param) {
             if (!isset($call->args[$idx])) {
@@ -108,7 +109,7 @@ class ArgumentType implements Rule {
                     continue;
                 }
             }
-            if (!$components['typeResolver']->resolves($call->args[$idx]->type, $type)) {
+            if (!$state->resolver->resolves($call->args[$idx]->type, $type)) {
                 $errors[] = ["Type mismatch on $name() argument $idx, found {$call->args[$idx]->type} expecting {$type}", $call];
             }
         }
@@ -118,7 +119,7 @@ class ArgumentType implements Rule {
     /**
      * @return array
      */
-    protected function verifyInternalCall($func, $call, $components, $name) {
+    protected function verifyInternalCall($func, $call, $state, $name) {
         $errors = [];
         foreach ($func['params'] as $idx => $param) {
             if (!isset($call->args[$idx])) {
@@ -132,7 +133,7 @@ class ArgumentType implements Rule {
                 if (is_string($call->args[$idx]->type)) {
                     $call->args[$idx]->type = Type::fromDecl($call->args[$idx]->type);
                 }
-                if (!$components['typeResolver']->resolves($call->args[$idx]->type, $type)) {
+                if (!$state->resolver->resolves($call->args[$idx]->type, $type)) {
                     $errors[] = ["Type mismatch on $name() argument $idx, found {$call->args[$idx]->type} expecting {$type}", $call];
                 }
             }
