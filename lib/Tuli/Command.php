@@ -63,7 +63,7 @@ abstract class Command extends CoreCommand {
     }
 
     public function analyzeGraphs(array $graphs) {
-        $state = new State($graphs);
+        $state = new State(array_values($graphs));
 
         echo "Determining Variable Types\n";
         $typeReconstructor = new TypeReconstructor;
