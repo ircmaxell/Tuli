@@ -11,9 +11,9 @@ namespace Tuli\Rule;
 
 use PHPCfg\Op;
 use PHPCfg\Operand;
-use Tuli\Rule;
-use PHPTypes\Type;
 use PHPTypes\State;
+use PHPTypes\Type;
+use Tuli\Rule;
 
 class ArgumentType implements Rule {
     

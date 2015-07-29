@@ -11,9 +11,8 @@ namespace Tuli\Rule;
 
 use PHPCfg\Op;
 use PHPCfg\Operand;
-use PHPTypes\Type;
 use PHPTypes\State;
-
+use PHPTypes\Type;
 
 class ConstructorType extends ArgumentType {
     

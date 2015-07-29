@@ -1,7 +1,7 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
     "hash": "f565c775b282411eedde165392109f0a",
@@ -130,12 +130,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ircmaxell/php-cfg.git",
-                "reference": "193a99691d6c3d2f24659a55e3e8e2e8993d941f"
+                "reference": "20089aff42bfe8a097f962b5553635a183a84d53"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/193a99691d6c3d2f24659a55e3e8e2e8993d941f",
-                "reference": "193a99691d6c3d2f24659a55e3e8e2e8993d941f",
+                "url": "https://api.github.com/repos/ircmaxell/php-cfg/zipball/20089aff42bfe8a097f962b5553635a183a84d53",
+                "reference": "20089aff42bfe8a097f962b5553635a183a84d53",
                 "shasum": ""
             },
             "require": {
@@ -165,7 +165,7 @@
                 }
             ],
             "description": "A Control Flow Graph implementation for PHP",
-            "time": "2015-07-27 21:37:56"
+            "time": "2015-07-28 17:09:48"
         },
         {
             "name": "ircmaxell/php-types",
@@ -173,12 +173,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ircmaxell/php-types.git",
-                "reference": "5f219e750ade0025f3ffebfb70b89e22c3925713"
+                "reference": "e73cb3039d6a57cb17f0b91a9b9210ef12a50cfe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ircmaxell/php-types/zipball/5f219e750ade0025f3ffebfb70b89e22c3925713",
-                "reference": "5f219e750ade0025f3ffebfb70b89e22c3925713",
+                "url": "https://api.github.com/repos/ircmaxell/php-types/zipball/e73cb3039d6a57cb17f0b91a9b9210ef12a50cfe",
+                "reference": "e73cb3039d6a57cb17f0b91a9b9210ef12a50cfe",
                 "shasum": ""
             },
             "require": {
@@ -206,7 +206,7 @@
                 }
             ],
             "description": "A PHP CFG Type Inference / Reconstruction Engine",
-            "time": "2015-07-28 03:12:51"
+            "time": "2015-07-28 17:11:16"
         },
         {
             "name": "nikic/php-parser",
@@ -346,12 +346,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Console.git",
-                "reference": "575782770a015042d2fe34f1388d5073bde784bd"
+                "reference": "eef94b47e4e21ab887ef03192d2fb65cc9929c76"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Console/zipball/575782770a015042d2fe34f1388d5073bde784bd",
-                "reference": "575782770a015042d2fe34f1388d5073bde784bd",
+                "url": "https://api.github.com/repos/symfony/Console/zipball/eef94b47e4e21ab887ef03192d2fb65cc9929c76",
+                "reference": "eef94b47e4e21ab887ef03192d2fb65cc9929c76",
                 "shasum": ""
             },
             "require": {
@@ -395,7 +395,7 @@
             ],
             "description": "Symfony Console Component",
             "homepage": "https://symfony.com",
-            "time": "2015-07-26 09:09:29"
+            "time": "2015-07-29 07:12:56"
         },
         {
             "name": "symfony/finder",
@@ -557,12 +557,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/FriendsOfPHP/PHP-CS-Fixer.git",
-                "reference": "646c8446afff44e60b506efa4f773c8b47740ba9"
+                "reference": "a32e3111cb3f811cb661024edaa3700e1b23b05d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/FriendsOfPHP/PHP-CS-Fixer/zipball/646c8446afff44e60b506efa4f773c8b47740ba9",
-                "reference": "646c8446afff44e60b506efa4f773c8b47740ba9",
+                "url": "https://api.github.com/repos/FriendsOfPHP/PHP-CS-Fixer/zipball/a32e3111cb3f811cb661024edaa3700e1b23b05d",
+                "reference": "a32e3111cb3f811cb661024edaa3700e1b23b05d",
                 "shasum": ""
             },
             "require": {
@@ -603,7 +603,7 @@
                 }
             ],
             "description": "A tool to automatically fix PHP code style",
-            "time": "2015-07-27 21:03:11"
+            "time": "2015-07-28 21:25:27"
         },
         {
             "name": "phpdocumentor/reflection-docblock",
@@ -960,12 +960,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "21b64e299bc68a9fed8f5107794acee6f0b657fb"
+                "reference": "4b4f866d456648e625dc37e224c618659f13d121"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/21b64e299bc68a9fed8f5107794acee6f0b657fb",
-                "reference": "21b64e299bc68a9fed8f5107794acee6f0b657fb",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/4b4f866d456648e625dc37e224c618659f13d121",
+                "reference": "4b4f866d456648e625dc37e224c618659f13d121",
                 "shasum": ""
             },
             "require": {
@@ -1024,7 +1024,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2015-07-26 12:57:56"
+            "time": "2015-07-29 11:20:37"
         },
         {
             "name": "phpunit/phpunit-mock-objects",

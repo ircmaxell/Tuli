@@ -9,14 +9,12 @@
 
 namespace Tuli;
 
-use PHPCfg\Block;
-use PHPCfg\Operand;
 use PHPCfg\Parser as CFGParser;
 use PHPCfg\Traverser;
 use PHPCfg\Visitor;
+use PhpParser\ParserFactory;
 use PHPTypes\State;
 use PHPTypes\TypeReconstructor;
-use PhpParser\ParserFactory;
 use Symfony\Component\Console\Command\Command as CoreCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;

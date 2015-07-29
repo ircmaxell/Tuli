@@ -11,9 +11,9 @@ namespace Tuli\Rule;
 
 use PHPCfg\Block;
 use PHPCfg\Op;
-use Tuli\Rule;
-use PHPTypes\Type;
 use PHPTypes\State;
+use PHPTypes\Type;
+use Tuli\Rule;
 
 class ReturnType implements Rule {
     
