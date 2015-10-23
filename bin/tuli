@@ -5,7 +5,7 @@ error_reporting(~0);
 gc_disable();
 
 $found = false;
-for ($i = 4; $i >= 0; $i--) {
+for ($i = 0; $i <= 4; $i++) {
 	$file = __DIR__ . str_repeat('/..', $i) . "/vendor/autoload.php";
 	if (file_exists($file)) {
 		$found = true;
